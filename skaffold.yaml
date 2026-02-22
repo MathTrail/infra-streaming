@@ -11,10 +11,7 @@ requires:
       - pgbouncer
       - redis
       - kafka
-      - telepresence
-      - vault
-      - external-secrets
-      - vault-init
+      - vault-db-init
 
 ---
 apiVersion: skaffold/v4beta13
@@ -76,59 +73,7 @@ deploy:
           - values/strimzi-values.yaml
         wait: true
 
----
-apiVersion: skaffold/v4beta13
-kind: Config
-metadata:
-  name: telepresence
 
-deploy:
-  helm:
-    releases:
-      - name: traffic-manager
-        repo: "{{.CHARTS_REPO}}"
-        remoteChart: telepresence-oss
-        namespace: ambassador
-        createNamespace: true
-        valuesFiles:
-          - values/telepresence-values.yaml
-        wait: true
-
----
-apiVersion: skaffold/v4beta13
-kind: Config
-metadata:
-  name: vault
-
-deploy:
-  helm:
-    releases:
-      - name: vault
-        repo: "{{.CHARTS_REPO}}"
-        remoteChart: vault
-        namespace: vault
-        createNamespace: true
-        valuesFiles:
-          - values/vault-values.yaml
-        wait: true
-
----
-apiVersion: skaffold/v4beta13
-kind: Config
-metadata:
-  name: external-secrets
-
-deploy:
-  helm:
-    releases:
-      - name: external-secrets
-        repo: "{{.CHARTS_REPO}}"
-        remoteChart: external-secrets
-        namespace: external-secrets
-        createNamespace: true
-        valuesFiles:
-          - values/external-secrets-values.yaml
-        wait: true
 
 ---
 apiVersion: skaffold/v4beta13
@@ -146,17 +91,16 @@ deploy:
     defaultNamespace: "{{.NAMESPACE}}"
 
 ---
-# vault-init deploys into the same namespace as postgres (where the Postgres secret lives).
-# The Job waits for Vault to be ready, then configures the Database Secrets Engine and K8s auth.
+# vault-db-init creates per-namespace Vault database config and dynamic role.
+# Requires vault-cluster-init (from infra/) to have run first.
 apiVersion: skaffold/v4beta13
 kind: Config
 metadata:
-  name: vault-init
+  name: vault-db-init
 
 manifests:
   rawYaml:
-    - manifests/vault-init-job.yaml
-    - manifests/cluster-secret-store.yaml
+    - manifests/vault-db-init-job.yaml
 
 deploy:
   kubectl:

@@ -1,25 +1,27 @@
-# ServiceAccount for the vault-init Job.
+# ServiceAccount for the vault-db-init Job.
 # Needs no special permissions itself — Vault does the TokenReview via its own SA.
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: vault-init
+  name: vault-db-init
 
 ---
-# Job: configure Vault after it starts in dev mode.
+# Job: configure per-namespace Vault database secrets for local development.
+# Creates the DB connection config and dynamic role in Vault for this namespace.
+# Requires vault-cluster-init (from infra/) to have run first.
 # Runs once; RestartPolicy=OnFailure handles transient startup races.
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: vault-init
+  name: vault-db-init
 spec:
   ttlSecondsAfterFinished: 300
   template:
     spec:
       restartPolicy: OnFailure
-      serviceAccountName: vault-init
+      serviceAccountName: vault-db-init
       containers:
-        - name: vault-init
+        - name: vault-db-init
           image: hashicorp/vault:1.17
           env:
             - name: VAULT_ADDR
@@ -49,26 +51,18 @@ spec:
               done
               echo "Vault is ready."
 
-              # ── Kubernetes auth ──────────────────────────────────────────
-              vault auth enable kubernetes 2>/dev/null || echo "kubernetes auth already enabled"
-
-              vault write auth/kubernetes/config \
-                kubernetes_host="https://${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT}"
-
-              # ── Database Secrets Engine ──────────────────────────────────
-              vault secrets enable database 2>/dev/null || echo "database secrets already enabled"
-
-              vault write database/config/mentor-postgres \
+              # ── Database connection config ───────────────────────────────
+              vault write database/config/mentor-postgres-${NAMESPACE} \
                 plugin_name="postgresql-database-plugin" \
-                allowed_roles="mentor-api-role" \
+                allowed_roles="mentor-api-role-${NAMESPACE}" \
                 connection_url="postgresql://postgres:${PG_PASSWORD}@${PG_HOST}:5432/mentor?sslmode=disable" \
                 username="postgres" \
                 password="${PG_PASSWORD}"
 
               # Dynamic role: short-lived users with DML access on the mentor DB.
               # TTL 1h (default), max 24h. ESO refreshes at 55m to stay ahead of expiry.
-              vault write database/roles/mentor-api-role \
-                db_name="mentor-postgres" \
+              vault write database/roles/mentor-api-role-${NAMESPACE} \
+                db_name="mentor-postgres-${NAMESPACE}" \
                 creation_statements="
                   CREATE ROLE \"{{name}}\" WITH LOGIN PASSWORD '{{password}}' VALID UNTIL '{{expiration}}';
                   GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO \"{{name}}\";
@@ -78,18 +72,4 @@ spec:
                 default_ttl="1h" \
                 max_ttl="24h"
 
-              # ── Policy for ESO ───────────────────────────────────────────
-              vault policy write eso-policy - <<'POLICY'
-              path "database/creds/mentor-api-role" {
-                capabilities = ["read"]
-              }
-              POLICY
-
-              # ── Kubernetes auth role for ESO's ServiceAccount ────────────
-              vault write auth/kubernetes/role/eso-role \
-                bound_service_account_names="external-secrets" \
-                bound_service_account_namespaces="external-secrets" \
-                policies="eso-policy" \
-                ttl="24h"
-
-              echo "Vault init complete."
+              echo "Vault DB init complete."
