@@ -51,6 +51,28 @@ spec:
               done
               echo "Vault is ready."
 
+              # ── Enable engines and auth methods (idempotent after inmem restart) ──
+              vault secrets enable database 2>/dev/null || true
+              vault auth enable kubernetes 2>/dev/null || true
+
+              # Configure Kubernetes auth to talk to the in-cluster API server
+              vault write auth/kubernetes/config \
+                kubernetes_host="https://kubernetes.default.svc.cluster.local:443"
+
+              # Policy: allow ESO to read dynamic DB credentials and static secrets
+              printf '%s\n' \
+                'path "database/creds/*" { capabilities = ["read"] }' \
+                'path "database/config/*" { capabilities = ["read"] }' \
+                'path "secret/data/*" { capabilities = ["read"] }' \
+                | vault policy write eso-policy -
+
+              # Role: bind ESO's service account to the policy
+              vault write auth/kubernetes/role/eso-role \
+                bound_service_account_names=external-secrets \
+                bound_service_account_namespaces=external-secrets \
+                policies=eso-policy \
+                ttl=1h
+
               # ── Database connection config ───────────────────────────────
               vault write database/config/mentor-postgres-${NAMESPACE} \
                 plugin_name="postgresql-database-plugin" \

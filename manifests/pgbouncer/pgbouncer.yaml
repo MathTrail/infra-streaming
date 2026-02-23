@@ -1,8 +1,9 @@
 # PgBouncer — connection pooler for PostgreSQL
 # Deployed in the mathtrail namespace alongside postgres.
 #
-# Auth strategy: auth_query against pg_shadow.
-#   - pgbouncer_auth user (created by postgresql initdb script) holds SELECT on pg_shadow
+# Auth strategy: auth_query via SECURITY DEFINER function.
+#   - pgbouncer_auth user is created by the postgresql initdb script
+#   - public.lookup_user() (SECURITY DEFINER) reads pg_shadow without requiring superuser
 #   - Only pgbouncer_auth's credentials are stored in the userlist Secret
 #   - All other users are authenticated dynamically via auth_query (no userlist maintenance)
 #
@@ -36,10 +37,10 @@ data:
     auth_type  = scram-sha-256
     auth_file  = /etc/pgbouncer/userlist.txt
 
-    ; Dynamic auth: PgBouncer queries pg_shadow for each connecting user's verifier.
+    ; Dynamic auth: PgBouncer calls lookup_user() which reads pg_shadow via SECURITY DEFINER.
     ; Only pgbouncer_auth's credentials need to be in userlist.txt.
     auth_user  = pgbouncer_auth
-    auth_query = SELECT usename, passwd FROM pg_shadow WHERE usename=$1
+    auth_query = SELECT * FROM public.lookup_user($1)
 
     pool_mode        = transaction
     max_client_conn  = 1000
