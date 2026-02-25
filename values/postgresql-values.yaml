@@ -80,10 +80,23 @@ primary:
           $$ SELECT usename, passwd FROM pg_shadow WHERE usename = p_user; $$;
         GRANT EXECUTE ON FUNCTION public.lookup_user(TEXT) TO pgbouncer_auth;
       vault-default-privileges.sql: |
-        -- Vault Database Secrets Engine creates short-lived users in the mentor DB.
+        -- Vault Database Secrets Engine creates short-lived users.
         -- Pre-grant default privileges so dynamic users automatically get access to
         -- tables and sequences created by future migrations (not just existing ones).
+        -- Applied to all databases that have Vault dynamic roles.
         \connect mentor
+        ALTER DEFAULT PRIVILEGES IN SCHEMA public
+          GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO PUBLIC;
+        ALTER DEFAULT PRIVILEGES IN SCHEMA public
+          GRANT USAGE, SELECT ON SEQUENCES TO PUBLIC;
+
+        \connect profile
+        ALTER DEFAULT PRIVILEGES IN SCHEMA public
+          GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO PUBLIC;
+        ALTER DEFAULT PRIVILEGES IN SCHEMA public
+          GRANT USAGE, SELECT ON SEQUENCES TO PUBLIC;
+
+        \connect mathtrail
         ALTER DEFAULT PRIVILEGES IN SCHEMA public
           GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO PUBLIC;
         ALTER DEFAULT PRIVILEGES IN SCHEMA public

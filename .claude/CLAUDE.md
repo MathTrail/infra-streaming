@@ -11,6 +11,12 @@ No Dapr communication — provides data stores.
 Services that depend on this: mathtrail-profile (PostgreSQL, Redis), mathtrail-identity (PostgreSQL for Ory), mathtrail-task (PostgreSQL).
 Default credentials: mathtrail/mathtrail (PostgreSQL), mathtrail (Redis).
 
+# Vault Integration
+Database credential management (dynamic roles, connections) is handled by the Bank-Vaults Vault CR
+in mathtrail-infra (not in this repo). This repo only provides the data stores themselves.
+The postgresql-values.yaml includes ALTER DEFAULT PRIVILEGES for Vault dynamic users
+on the mentor, profile, and mathtrail databases.
+
 # Development Standards
 - Keep resource requests minimal (local dev — nano resources)
 - All Helm values in values/ directory
