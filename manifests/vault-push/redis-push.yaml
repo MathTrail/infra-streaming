@@ -1,0 +1,29 @@
+# PushSecret: pushes the Redis password from the Bitnami-generated K8s Secret
+# into Vault KV v2 at secret/local/mathtrail-profile.
+#
+# Source (created by Bitnami redis chart):
+#   redis-master.redis-password — Redis auth password
+#
+# Destination (Vault KV v2, path: local/mathtrail-profile):
+#   redis-password — consumed by profile-api via ESO ExternalSecret
+#
+# Prerequisite: ESO must be running and eso-role must include eso-write-policy.
+apiVersion: external-secrets.io/v1alpha1
+kind: PushSecret
+metadata:
+  name: redis-creds-push
+  namespace: mathtrail
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: vault-kv-backend
+  selector:
+    secret:
+      name: redis-master
+  data:
+    - match:
+        secretKey: redis-password
+        remoteRef:
+          remoteKey: local/mathtrail-profile
+          property: redis-password

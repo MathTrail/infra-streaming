@@ -1,0 +1,36 @@
+# PushSecret: pushes postgres credentials from the Bitnami-generated K8s Secret
+# into Vault KV v2 at secret/local/postgres.
+#
+# Sources (created by Bitnami postgres chart):
+#   postgres-postgresql.postgres-password — postgres superuser password
+#   postgres-postgresql.password          — application user (mathtrail) password
+#
+# Destination (Vault KV v2, path: local/postgres):
+#   postgres-password — postgres superuser (used by Vault DB engine rootCredentials)
+#   password          — mathtrail app user (used by Kratos/Hydra for future migration)
+#
+# Prerequisite: ESO must be running and eso-role must include eso-write-policy.
+apiVersion: external-secrets.io/v1alpha1
+kind: PushSecret
+metadata:
+  name: postgres-creds-push
+  namespace: mathtrail
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: vault-kv-backend
+  selector:
+    secret:
+      name: postgres-postgresql
+  data:
+    - match:
+        secretKey: postgres-password
+        remoteRef:
+          remoteKey: local/postgres
+          property: postgres-password
+    - match:
+        secretKey: password
+        remoteRef:
+          remoteKey: local/postgres
+          property: password
