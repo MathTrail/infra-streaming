@@ -1,19 +1,16 @@
+{{- if .Values.dashboard.enabled }}
 # Grafana dashboard for PgBouncer pool metrics.
 # Discovered automatically by the Grafana sidecar (label: grafana_dashboard=1).
-# Folder: Infrastructure
-#
-# Metrics exposed by prometheuscommunity/pgbouncer-exporter:
-#   pgbouncer_pools_client_active   — clients currently in a server session
-#   pgbouncer_pools_client_waiting  — clients waiting for a free server connection (queue depth)
-#   pgbouncer_pools_server_active   — server connections actively in use
-#   pgbouncer_pools_server_idle     — server connections idle in pool
-#   pgbouncer_stats_total_requests_total — total queries routed
-
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: pgbouncer-grafana-dashboard
+  namespace: {{ .Release.Namespace }}
   labels:
+    app.kubernetes.io/name: pgbouncer
+    app.kubernetes.io/part-of: mathtrail
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version }}
     grafana_dashboard: "1"
   annotations:
     grafana_folder: "Infrastructure"
@@ -50,11 +47,11 @@ data:
           "targets": [
             {
               "expr": "sum by (database) (pgbouncer_pools_client_active{database=~\"$database\"})",
-              "legendFormat": "active — {{database}}"
+              "legendFormat": "active — {{`{{database}}`}}"
             },
             {
               "expr": "sum by (database) (pgbouncer_pools_client_waiting{database=~\"$database\"})",
-              "legendFormat": "waiting — {{database}}"
+              "legendFormat": "waiting — {{`{{database}}`}}"
             }
           ],
           "fieldConfig": {
@@ -71,11 +68,11 @@ data:
           "targets": [
             {
               "expr": "sum by (database) (pgbouncer_pools_server_active{database=~\"$database\"})",
-              "legendFormat": "server active — {{database}}"
+              "legendFormat": "server active — {{`{{database}}`}}"
             },
             {
               "expr": "sum by (database) (pgbouncer_pools_server_idle{database=~\"$database\"})",
-              "legendFormat": "server idle — {{database}}"
+              "legendFormat": "server idle — {{`{{database}}`}}"
             }
           ],
           "fieldConfig": {
@@ -128,3 +125,4 @@ data:
         }
       ]
     }
+{{- end }}

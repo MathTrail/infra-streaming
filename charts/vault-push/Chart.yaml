@@ -1,0 +1,4 @@
+apiVersion: v2
+name: vault-push
+description: ESO PushSecrets — sync Bitnami K8s Secrets to Vault KV (local dev)
+version: 0.1.0

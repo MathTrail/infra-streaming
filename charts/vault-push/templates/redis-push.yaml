@@ -6,18 +6,16 @@
 #
 # Destination (Vault KV v2, path: local/mathtrail-profile):
 #   redis-password — consumed by profile-api via ESO ExternalSecret
-#
-# Prerequisite: ESO must be running and eso-role must include eso-write-policy.
 apiVersion: external-secrets.io/v1alpha1
 kind: PushSecret
 metadata:
   name: redis-creds-push
-  namespace: mathtrail
+  namespace: {{ .Release.Namespace }}
 spec:
-  refreshInterval: 1h
+  refreshInterval: {{ .Values.refreshInterval }}
   secretStoreRef:
-    kind: ClusterSecretStore
-    name: vault-kv-backend
+    kind: {{ .Values.secretStore.kind }}
+    name: {{ .Values.secretStore.name }}
   selector:
     secret:
       name: redis-master

@@ -79,14 +79,14 @@ kind: Config
 metadata:
   name: pgbouncer
 
-manifests:
-  kustomize:
-    paths:
-      - manifests/pgbouncer
-
 deploy:
-  kubectl:
-    defaultNamespace: "{{.NAMESPACE}}"
+  helm:
+    releases:
+      - name: pgbouncer
+        chartPath: charts/pgbouncer
+        namespace: "{{.NAMESPACE}}"
+        createNamespace: true
+        wait: true
 
 ---
 apiVersion: skaffold/v4beta13
@@ -103,11 +103,10 @@ requires:
       - postgres
       - redis
 
-manifests:
-  kustomize:
-    paths:
-      - manifests/vault-push
-
 deploy:
-  kubectl:
-    defaultNamespace: "{{.NAMESPACE}}"
+  helm:
+    releases:
+      - name: vault-push
+        chartPath: charts/vault-push
+        namespace: "{{.NAMESPACE}}"
+        createNamespace: true

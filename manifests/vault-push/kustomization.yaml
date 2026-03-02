@@ -1,3 +1,0 @@
-resources:
-  - postgres-push.yaml
-  - redis-push.yaml

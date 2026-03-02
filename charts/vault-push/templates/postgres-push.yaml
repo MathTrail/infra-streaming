@@ -8,18 +8,16 @@
 # Destination (Vault KV v2, path: local/postgres):
 #   postgres-password — postgres superuser (used by Vault DB engine rootCredentials)
 #   password          — mathtrail app user (used by Kratos/Hydra for future migration)
-#
-# Prerequisite: ESO must be running and eso-role must include eso-write-policy.
 apiVersion: external-secrets.io/v1alpha1
 kind: PushSecret
 metadata:
   name: postgres-creds-push
-  namespace: mathtrail
+  namespace: {{ .Release.Namespace }}
 spec:
-  refreshInterval: 1h
+  refreshInterval: {{ .Values.refreshInterval }}
   secretStoreRef:
-    kind: ClusterSecretStore
-    name: vault-kv-backend
+    kind: {{ .Values.secretStore.kind }}
+    name: {{ .Values.secretStore.name }}
   selector:
     secret:
       name: postgres-postgresql
