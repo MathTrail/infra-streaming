@@ -13,9 +13,9 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   refreshInterval: {{ .Values.vaultPush.refreshInterval }}
-  secretStoreRef:
-    kind: {{ .Values.vaultPush.secretStore.kind }}
-    name: {{ .Values.vaultPush.secretStore.name }}
+  secretStoreRefs:
+    - kind: {{ .Values.vaultPush.secretStore.kind }}
+      name: {{ .Values.vaultPush.secretStore.name }}
   selector:
     secret:
       name: redis-master
