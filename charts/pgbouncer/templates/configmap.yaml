@@ -11,12 +11,7 @@ metadata:
 data:
   pgbouncer.ini: |
     [databases]
-    kratos    = host={{ .Values.postgres.host }} port={{ .Values.postgres.port }} dbname=kratos    pool_mode=session
-    hydra     = host={{ .Values.postgres.host }} port={{ .Values.postgres.port }} dbname=hydra     pool_mode=session
-    keto      = host={{ .Values.postgres.host }} port={{ .Values.postgres.port }} dbname=keto      pool_mode=session
-    mentor    = host={{ .Values.postgres.host }} port={{ .Values.postgres.port }} dbname=mentor    pool_mode=transaction
-    profile   = host={{ .Values.postgres.host }} port={{ .Values.postgres.port }} dbname=profile   pool_mode=transaction
-    mathtrail = host={{ .Values.postgres.host }} port={{ .Values.postgres.port }} dbname=mathtrail pool_mode=transaction
+    * = host={{ .Values.postgres.host }} port={{ .Values.postgres.port }}
 
     [pgbouncer]
     listen_addr = 0.0.0.0
