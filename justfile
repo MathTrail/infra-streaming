@@ -9,6 +9,7 @@ setup:
 
 # Deploy all infrastructure components to the cluster
 deploy: setup
+    helm dependency update charts/kafka
     skaffold deploy
 
 # Delete all deployed infrastructure components and persistent volumes from the cluster

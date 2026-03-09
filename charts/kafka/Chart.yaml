@@ -4,5 +4,5 @@ description: Strimzi Kafka operator + cluster for MathTrail (local dev)
 version: 0.1.0
 dependencies:
   - name: strimzi-kafka-operator
-    version: "0.50.1"
+    version: "0.51.0"
     repository: "https://MathTrail.github.io/charts/charts"
