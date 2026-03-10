@@ -1,8 +1,0 @@
-apiVersion: v2
-name: redis
-description: Redis for MathTrail (local dev)
-version: 0.1.0
-dependencies:
-  - name: redis
-    version: "25.3.2"
-    repository: "https://MathTrail.github.io/charts/charts"

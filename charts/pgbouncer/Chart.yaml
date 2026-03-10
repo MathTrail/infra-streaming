@@ -1,4 +1,0 @@
-apiVersion: v2
-name: pgbouncer
-description: PgBouncer connection pooler for MathTrail (local dev)
-version: 0.1.0

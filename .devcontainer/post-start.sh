@@ -4,9 +4,6 @@ set -e
 # Load platform environment
 set -a; source /etc/mathtrail/platform.env; set +a
 
-# Set up skaffold.env
-ln -sf /etc/mathtrail/platform.env "$PWD/skaffold.env"
-
 # Set up kubeconfig from host bind mount (mount is root-owned, hence sudo)
 mkdir -p /home/vscode/.kube
 KUBECONFIG_SRC="/home/vscode/.kube-host/${CLUSTER_NAME}.yaml"
