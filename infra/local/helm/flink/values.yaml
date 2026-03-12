@@ -1,0 +1,37 @@
+flink-kubernetes-operator:
+  # Watch only the mathtrail namespace (reduces RBAC surface)
+  watchNamespaces: ["mathtrail"]
+
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+    limits:
+      memory: 512Mi
+      cpu: 500m
+
+# FlinkDeployment configuration (user-enrichment job)
+job:
+  image: apache/flink:1.20-scala_2.12-java17
+  flinkVersion: v1_20
+
+  kafka:
+    bootstrapServers: kafka-kafka-tls-bootstrap:9093
+    # KafkaUser "flink" secret — created by Strimzi UserOperator
+    tlsSecretName: flink
+    jksTruststorePassword: changeit
+    jksKeystorePassword: changeit
+
+  minio:
+    endpoint: http://minio:9000
+    accessKey: minioadmin
+    secretKey: minioadmin
+
+  apicurio:
+    url: http://apicurio-registry:8080/apis/ccompat/v6
+
+  checkpoints:
+    dir: s3://flink-checkpoints/user-enrichment
+    intervalMs: "60000"
+
+  jobJarUri: "local:///opt/flink/usrlib/user-enrichment.jar"

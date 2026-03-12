@@ -1,0 +1,124 @@
+# Schema registration Job — runs after Apicurio is ready.
+# Registers 3 Avro schemas via Confluent compat API (subjects: <topic>-value).
+# Apicurio ephemeral mode loses schemas on pod restart → Job is re-run on each Helm upgrade.
+# Subjects follow Confluent naming convention so Flink's avro-confluent format can resolve them.
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: avro-schemas
+data:
+  identity.users.created-value.json: |
+    {
+      "type": "record",
+      "name": "KratosIdentity",
+      "namespace": "io.mathtrail.debezium",
+      "fields": [
+        {"name": "id",        "type": "string",           "default": ""},
+        {"name": "schema_id", "type": "string",           "default": ""},
+        {"name": "nid",       "type": ["null", "string"], "default": null},
+        {"name": "traits",    "type": "string",           "default": "{}"},
+        {"name": "state",     "type": "string",           "default": "active"},
+        {"name": "__op",      "type": "string",           "default": ""},
+        {"name": "__ts_ms",   "type": "long",             "default": 0}
+      ]
+    }
+
+  identity.addresses.created-value.json: |
+    {
+      "type": "record",
+      "name": "KratosVerifiableAddress",
+      "namespace": "io.mathtrail.debezium",
+      "fields": [
+        {"name": "id",          "type": "string",  "default": ""},
+        {"name": "identity_id", "type": "string",  "default": ""},
+        {"name": "status",      "type": "string",  "default": ""},
+        {"name": "via",         "type": "string",  "default": "email"},
+        {"name": "value",       "type": "string",  "default": ""},
+        {"name": "verified",    "type": "boolean", "default": false},
+        {"name": "__op",        "type": "string",  "default": ""},
+        {"name": "__ts_ms",     "type": "long",    "default": 0}
+      ]
+    }
+
+  students.onboarding.ready-value.json: |
+    {
+      "type": "record",
+      "name": "StudentOnboardingReady",
+      "namespace": "io.mathtrail.students",
+      "fields": [
+        {"name": "event_id",    "type": "string", "default": ""},
+        {"name": "user_id",     "type": "string", "default": ""},
+        {"name": "email",       "type": "string", "default": ""},
+        {"name": "first_name",  "type": "string", "default": ""},
+        {"name": "last_name",   "type": "string", "default": ""},
+        {"name": "role",        "type": "string", "default": "student"},
+        {"name": "occurred_at", "type": "string", "default": ""}
+      ]
+    }
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: schema-registration
+  annotations:
+    # Re-run on every Helm upgrade to re-register schemas after Apicurio pod restarts
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  backoffLimit: 5
+  template:
+    spec:
+      restartPolicy: OnFailure
+      initContainers:
+        # Wait for Apicurio to be ready before registering schemas
+        - name: wait-apicurio
+          image: curlimages/curl:8.7.1
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for Apicurio Registry..."
+              until curl -sf http://apicurio-registry:8080/health/ready; do
+                echo "  not ready, retrying in 5s..."
+                sleep 5
+              done
+              echo "Apicurio is ready."
+      containers:
+        - name: register-schemas
+          image: curlimages/curl:8.7.1
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              REGISTRY="http://apicurio-registry:8080/apis/ccompat/v6"
+
+              register_schema() {
+                local subject="$1"
+                local schema_file="$2"
+                echo "Registering subject: $subject"
+                # Build JSON payload: {"schema": "<escaped schema string>"}
+                schema=$(cat "$schema_file" | tr -d '\n' | sed 's/"/\\"/g')
+                response=$(curl -sf -X POST \
+                  -H "Content-Type: application/vnd.schemaregistry.v1+json" \
+                  -d "{\"schema\": \"${schema}\"}" \
+                  "${REGISTRY}/subjects/${subject}/versions")
+                echo "  -> $response"
+              }
+
+              register_schema "identity.users.created-value"     /schemas/identity.users.created-value.json
+              register_schema "identity.addresses.created-value" /schemas/identity.addresses.created-value.json
+              register_schema "students.onboarding.ready-value"  /schemas/students.onboarding.ready-value.json
+
+              echo "All schemas registered successfully."
+          volumeMounts:
+            - name: schemas
+              mountPath: /schemas
+      volumes:
+        - name: schemas
+          configMap:
+            name: avro-schemas

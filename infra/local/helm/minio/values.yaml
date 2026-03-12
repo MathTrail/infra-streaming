@@ -1,0 +1,28 @@
+minio:
+  mode: standalone
+
+  # Local dev credentials — NOT for production
+  auth:
+    rootUser: minioadmin
+    rootPassword: minioadmin
+
+  # Pre-create the bucket Flink uses for checkpoints
+  defaultBuckets: "flink-checkpoints"
+
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+    limits:
+      memory: 512Mi
+      cpu: 500m
+
+  persistence:
+    enabled: true
+    size: 2Gi
+
+  service:
+    type: ClusterIP
+    ports:
+      api: 9000
+      console: 9001

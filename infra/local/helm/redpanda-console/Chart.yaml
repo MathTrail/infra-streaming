@@ -1,8 +1,8 @@
 apiVersion: v2
-name: kafka
-description: Strimzi Kafka operator + cluster for MathTrail (local dev)
+name: redpanda-console
+description: Redpanda Console — Kafka UI for local development observability
 version: 0.1.0
 dependencies:
-  - name: strimzi-kafka-operator
+  - name: console
     version: "*"
     repository: "https://MathTrail.github.io/charts/charts"

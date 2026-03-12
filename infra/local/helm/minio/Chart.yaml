@@ -1,8 +1,8 @@
 apiVersion: v2
-name: kafka
-description: Strimzi Kafka operator + cluster for MathTrail (local dev)
+name: minio
+description: MinIO standalone — S3-compatible storage for Flink checkpoints (local dev)
 version: 0.1.0
 dependencies:
-  - name: strimzi-kafka-operator
+  - name: minio
     version: "*"
     repository: "https://MathTrail.github.io/charts/charts"

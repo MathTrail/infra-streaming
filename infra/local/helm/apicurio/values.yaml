@@ -1,0 +1,17 @@
+apicurio-registry:
+  # Ephemeral (in-memory) storage — suitable for local dev
+  # All schemas are re-registered on each deploy via the schema-registration Job
+  app:
+    persistence: mem
+
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+    limits:
+      memory: 512Mi
+      cpu: 500m
+
+  service:
+    type: ClusterIP
+    port: 8080

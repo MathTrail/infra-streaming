@@ -1,0 +1,93 @@
+# Helm pre-install/pre-upgrade Job — creates the Debezium replication user in Kratos PostgreSQL.
+# Runs before KafkaConnect is deployed.
+# Credentials are read from the VSO-synced Secret "debezium-pg-creds".
+# Idempotent: safe to re-run.
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: debezium-replication-user-init
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 5
+  template:
+    spec:
+      restartPolicy: OnFailure
+      initContainers:
+        # Wait for VSO to sync the Vault secret before reading it
+        - name: wait-secret
+          image: bitnami/kubectl:latest
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for debezium-pg-creds secret..."
+              until kubectl get secret debezium-pg-creds -n {{ .Release.Namespace }} > /dev/null 2>&1; do
+                echo "  not found, retrying in 3s..."
+                sleep 3
+              done
+              echo "Secret ready."
+      containers:
+        - name: create-replication-user
+          image: postgres:16-alpine
+          env:
+            - name: PGHOST
+              value: {{ .Values.postgres.host }}
+            - name: PGPORT
+              value: {{ .Values.postgres.port | quote }}
+            - name: PGDATABASE
+              value: {{ .Values.postgres.database }}
+            - name: PGUSER
+              value: postgres
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  # Bitnami PostgreSQL chart creates this secret
+                  name: identity-postgres-postgresql
+                  key: postgres-password
+            - name: DEBEZIUM_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgres.credentialsSecret }}
+                  key: username
+            - name: DEBEZIUM_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgres.credentialsSecret }}
+                  key: password
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -e
+
+              until pg_isready -h "$PGHOST" -U "$PGUSER" -q; do
+                echo "Waiting for PostgreSQL..." && sleep 2
+              done
+
+              echo "Creating Debezium replication user: $DEBEZIUM_USER"
+
+              # Create user with REPLICATION privilege (idempotent)
+              psql -d postgres -c "
+                DO \$\$
+                BEGIN
+                  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '$DEBEZIUM_USER') THEN
+                    CREATE USER $DEBEZIUM_USER REPLICATION LOGIN PASSWORD '$DEBEZIUM_PASSWORD';
+                  ELSE
+                    ALTER USER $DEBEZIUM_USER WITH PASSWORD '$DEBEZIUM_PASSWORD';
+                  END IF;
+                END \$\$;
+              "
+
+              psql -d postgres -c "GRANT CONNECT ON DATABASE kratos TO $DEBEZIUM_USER;"
+              psql -d kratos  -c "GRANT USAGE ON SCHEMA public TO $DEBEZIUM_USER;"
+              psql -d kratos  -c "GRANT SELECT ON TABLE public.identities TO $DEBEZIUM_USER;"
+              psql -d kratos  -c "GRANT SELECT ON TABLE public.identity_verifiable_addresses TO $DEBEZIUM_USER;"
+              psql -d kratos  -c "
+                ALTER DEFAULT PRIVILEGES IN SCHEMA public
+                  GRANT SELECT ON TABLES TO $DEBEZIUM_USER;
+              "
+
+              echo "Replication user setup complete."

@@ -1,0 +1,8 @@
+apiVersion: v2
+name: apicurio
+description: Apicurio Registry (ephemeral) + Avro schema registration for MathTrail EDA
+version: 0.1.0
+dependencies:
+  - name: apicurio-registry
+    version: "*"
+    repository: "https://MathTrail.github.io/charts/charts"

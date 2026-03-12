@@ -1,0 +1,8 @@
+apiVersion: v2
+name: flink
+description: Apache Flink Kubernetes Operator + user-enrichment FlinkDeployment for MathTrail EDA
+version: 0.1.0
+dependencies:
+  - name: flink-kubernetes-operator
+    version: "*"
+    repository: "https://MathTrail.github.io/charts/charts"
