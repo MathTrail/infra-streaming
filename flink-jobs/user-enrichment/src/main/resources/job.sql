@@ -4,9 +4,9 @@
 --   identity.users.created        (public.identities)
 --   identity.addresses.created    (public.identity_verifiable_addresses)
 -- Produces domain event:
---   students.onboarding.ready     — emitted when student is created AND email is verified
+--   students.onboarding.ready     — emitted when parent is created AND email is verified
 -- Routes invalid CREATE events to:
---   identity.users.created.dlq    — null_id, null_email, not_student
+--   identity.users.created.dlq    — null_id, null_email, not_parent
 --
 -- Event time: uses __ts_ms (DB transaction time), not Kafka delivery timestamp.
 -- This ensures correct Interval JOIN even when CDC delivery is delayed.
@@ -108,9 +108,9 @@ CREATE TABLE users_dlq (
 -- ==== INTERVAL JOIN: users × addresses ====
 -- Stateful: Flink keeps state for both streams in RocksDB for up to 1 hour.
 -- Event is emitted only when:
---   1) identity was created (__op='c') AND role='student'
+--   1) identity was created (__op='c') AND role='parent'
 --   2) email address was verified (verified=true, via='email')
--- Window ±1h covers both immediate verification (Admin API) and
+-- Window ±1h covers both immediate verification (Admin API / OIDC trust) and
 -- delayed verification (user clicks email link).
 INSERT INTO students_onboarding_ready
 SELECT
@@ -128,7 +128,7 @@ JOIN addresses_created a
                        AND u.event_time + INTERVAL '1' HOUR
 WHERE u.`__op` = 'c'
   AND u.`id` IS NOT NULL
-  AND JSON_VALUE(u.`traits`, '$.role') = 'student'
+  AND JSON_VALUE(u.`traits`, '$.role') = 'parent'
   AND JSON_VALUE(u.`traits`, '$.email') IS NOT NULL
   AND a.`verified` = TRUE
   AND a.`via` = 'email'
@@ -142,7 +142,7 @@ SELECT
   CASE
     WHEN u.`id` IS NULL                                  THEN 'null_id'
     WHEN JSON_VALUE(u.`traits`, '$.email') IS NULL       THEN 'null_email'
-    WHEN JSON_VALUE(u.`traits`, '$.role') <> 'student'  THEN 'not_student'
+    WHEN JSON_VALUE(u.`traits`, '$.role') <> 'parent'   THEN 'not_parent'
     ELSE 'unknown'
   END AS reason,
   u.`__ts_ms` AS ts_ms
@@ -151,6 +151,6 @@ WHERE u.`__op` = 'c'
   AND (
     u.`id` IS NULL
     OR JSON_VALUE(u.`traits`, '$.email') IS NULL
-    OR JSON_VALUE(u.`traits`, '$.role') <> 'student'
+    OR JSON_VALUE(u.`traits`, '$.role') <> 'parent'
   )
 ;

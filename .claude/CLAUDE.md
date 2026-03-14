@@ -4,7 +4,7 @@ This repo deploys PostgreSQL, Redis, and Kafka to the local k3d cluster for deve
 All services with databases depend on this repo being deployed first.
 
 Tech Stack: Helm, Just, Strimzi Operator (Kafka)
-Namespace: mathtrail
+Namespace: streaming
 
 # Communication Map
 Provides data stores only.
@@ -29,6 +29,6 @@ Example: feat(infra-local): add kafka cluster via strimzi
 
 # Testing Strategy
 Deploy: `just deploy`
-Verify: `kubectl get pods -n mathtrail`
+Verify: `kubectl get pods -n streaming`
 Test connectivity: `kubectl exec` into pods and verify connections
 Priority: Manual deployment verification

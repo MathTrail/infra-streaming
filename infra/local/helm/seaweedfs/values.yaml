@@ -1,0 +1,51 @@
+seaweedfs:
+  master:
+    enabled: true
+    replicaCount: 1
+    persistence:
+      enabled: true
+      size: 1Gi
+
+  volume:
+    enabled: true
+    replicaCount: 1
+    persistence:
+      enabled: true
+      size: 5Gi
+
+  filer:
+    enabled: true
+    replicaCount: 1
+    # S3 API works through Filer — Filer must be ready before Flink accesses checkpoints.
+    # If Flink throws 503 on first start, that's expected; operator will retry.
+
+  s3:
+    enabled: true
+    port: 8333
+    auth:
+      enabled: true
+      existingConfigSecret: ""
+    # Fixed credentials for local dev — NOT for production
+    config: |
+      {
+        "identities": [
+          {
+            "name": "flink",
+            "credentials": [
+              {
+                "accessKey": "flinkaccess",
+                "secretKey": "flinksecret"
+              }
+            ],
+            "actions": ["Read", "Write", "List", "Tagging", "Admin"]
+          }
+        ]
+      }
+
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+    limits:
+      memory: 512Mi
+      cpu: 500m

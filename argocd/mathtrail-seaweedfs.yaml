@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: mathtrail-minio
+  name: mathtrail-seaweedfs
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "2"
@@ -12,10 +12,10 @@ spec:
   source:
     repoURL: https://github.com/MathTrail/infra-streaming
     targetRevision: main
-    path: infra/local/helm/minio
+    path: infra/local/helm/seaweedfs
   destination:
     server: https://kubernetes.default.svc
-    namespace: mathtrail
+    namespace: streaming
   syncPolicy:
     automated:
       prune: true

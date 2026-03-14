@@ -1,6 +1,6 @@
 flink-kubernetes-operator:
-  # Watch only the mathtrail namespace (reduces RBAC surface)
-  watchNamespaces: ["mathtrail"]
+  # Watch only the streaming namespace (reduces RBAC surface)
+  watchNamespaces: ["streaming"]
 
   resources:
     requests:
@@ -22,16 +22,17 @@ job:
     jksTruststorePassword: changeit
     jksKeystorePassword: changeit
 
-  minio:
-    endpoint: http://minio:9000
-    accessKey: minioadmin
-    secretKey: minioadmin
+  seaweedfs:
+    endpoint: http://mathtrail-seaweedfs-s3:8333
+    accessKey: flinkaccess
+    secretKey: flinksecret
 
   apicurio:
     url: http://apicurio-registry:8080/apis/ccompat/v6
 
   checkpoints:
-    dir: s3://flink-checkpoints/user-enrichment
+    dir: s3://flink/checkpoints
+    savepoints: s3://flink/savepoints
     intervalMs: "60000"
 
   jobJarUri: "local:///opt/flink/usrlib/user-enrichment.jar"

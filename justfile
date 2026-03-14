@@ -12,7 +12,7 @@ setup:
 dep-update:
     helm dependency update infra/local/helm/kafka
     helm dependency update infra/local/helm/apicurio
-    helm dependency update infra/local/helm/minio
+    helm dependency update infra/local/helm/seaweedfs
     helm dependency update infra/local/helm/debezium
     helm dependency update infra/local/helm/flink
     helm dependency update infra/local/helm/redpanda-console
@@ -21,7 +21,7 @@ dep-update:
 deploy:
     kubectl apply -f argocd/
     argocd app sync mathtrail-kafka --wait
-    argocd app sync mathtrail-apicurio mathtrail-minio --wait
+    argocd app sync mathtrail-apicurio mathtrail-seaweedfs --wait
     argocd app sync mathtrail-debezium --wait
     argocd app sync mathtrail-flink --wait
     argocd app sync mathtrail-redpanda-console --wait
@@ -29,7 +29,7 @@ deploy:
 # Remove all streaming ArgoCD Applications (cascade-deletes K8s resources)
 delete:
     argocd app delete mathtrail-redpanda-console mathtrail-flink mathtrail-debezium \
-        mathtrail-apicurio mathtrail-minio mathtrail-kafka --cascade --yes
+        mathtrail-apicurio mathtrail-seaweedfs mathtrail-kafka --cascade --yes
 
 # Sync a single app (usage: just sync mathtrail-kafka)
 sync app="mathtrail-kafka":
@@ -37,7 +37,7 @@ sync app="mathtrail-kafka":
 
 # Show status of all streaming apps
 status:
-    @for app in mathtrail-kafka mathtrail-apicurio mathtrail-minio \
+    @for app in mathtrail-kafka mathtrail-apicurio mathtrail-seaweedfs \
                 mathtrail-debezium mathtrail-flink mathtrail-redpanda-console; do \
         echo "=== $$app ==="; \
         argocd app get $$app 2>/dev/null || echo "not found"; \

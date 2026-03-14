@@ -53,7 +53,7 @@ data:
         {"name": "email",       "type": "string", "default": ""},
         {"name": "first_name",  "type": "string", "default": ""},
         {"name": "last_name",   "type": "string", "default": ""},
-        {"name": "role",        "type": "string", "default": "student"},
+        {"name": "role",        "type": "string", "default": "parent"},
         {"name": "occurred_at", "type": "string", "default": ""}
       ]
     }

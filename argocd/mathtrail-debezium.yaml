@@ -15,7 +15,7 @@ spec:
     path: infra/local/helm/debezium
   destination:
     server: https://kubernetes.default.svc
-    namespace: mathtrail
+    namespace: streaming
   syncPolicy:
     automated:
       prune: true
