@@ -28,13 +28,22 @@ deploy: setup
             --set gitBranch="$BRANCH"
     done
 
-# Remove all streaming ArgoCD Applications (cascade-deletes K8s resources)
+# Remove all streaming ArgoCD Applications and workload resources
 delete:
     #!/usr/bin/env bash
     set -euo pipefail
+    # Strip ArgoCD finalizers so CRs delete immediately without waiting for cascade
+    for app in mathtrail-kafka mathtrail-apicurio mathtrail-seaweedfs \
+               mathtrail-debezium mathtrail-flink mathtrail-redpanda-console; do
+        kubectl patch application "$app" -n argocd \
+            --type=merge -p '{"metadata":{"finalizers":null}}' 2>/dev/null || true
+    done
+    # Uninstall Helm releases (removes Application CRs)
     for app in kafka apicurio seaweedfs debezium flink redpanda-console; do
         helm uninstall mathtrail-$app --namespace argocd --ignore-not-found 2>/dev/null || true
     done
+    # Delete workload namespace (removes all streaming K8s resources)
+    kubectl delete namespace streaming --ignore-not-found --wait=true
 
 # Show status of all streaming apps
 status:
