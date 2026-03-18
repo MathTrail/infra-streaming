@@ -1,0 +1,3 @@
+gitBranch: main
+namespace: streaming
+deploy: true

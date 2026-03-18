@@ -1,6 +1,6 @@
 flink-kubernetes-operator:
-  # Watch only the streaming namespace (reduces RBAC surface)
-  watchNamespaces: ["streaming"]
+  # Namespace is set via ArgoCD Application helm.parameters (STREAMING_NAMESPACE from global.env)
+  watchNamespaces: []
 
   resources:
     requests:

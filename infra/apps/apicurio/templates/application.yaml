@@ -1,21 +1,24 @@
+{{- if .Values.deploy }}
+# Apicurio Registry — Avro schema registry for Kafka topics.
+# wave 2: parallel with seaweedfs; depends on Kafka (wave 1).
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: mathtrail-debezium
+  name: mathtrail-apicurio
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "3"
+    argocd.argoproj.io/sync-wave: "2"
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: mathtrail
   source:
     repoURL: https://github.com/MathTrail/infra-streaming
-    targetRevision: main
-    path: infra/local/helm/debezium
+    targetRevision: {{ .Values.gitBranch }}
+    path: infra/local/helm/apicurio
   destination:
     server: https://kubernetes.default.svc
-    namespace: streaming
+    namespace: {{ .Values.namespace }}
   syncPolicy:
     automated:
       prune: true
@@ -23,3 +26,4 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
+{{- end }}

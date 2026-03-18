@@ -1,21 +1,24 @@
+{{- if .Values.deploy }}
+# SeaweedFS — S3-compatible object storage for Flink checkpoints.
+# wave 2: parallel with apicurio; depends on Kafka (wave 1).
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: mathtrail-redpanda-console
+  name: mathtrail-seaweedfs
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "5"
+    argocd.argoproj.io/sync-wave: "2"
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: mathtrail
   source:
     repoURL: https://github.com/MathTrail/infra-streaming
-    targetRevision: main
-    path: infra/local/helm/redpanda-console
+    targetRevision: {{ .Values.gitBranch }}
+    path: infra/local/helm/seaweedfs
   destination:
     server: https://kubernetes.default.svc
-    namespace: streaming
+    namespace: {{ .Values.namespace }}
   syncPolicy:
     automated:
       prune: true
@@ -23,3 +26,4 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
+{{- end }}

@@ -1,21 +1,24 @@
+{{- if .Values.deploy }}
+# Strimzi operator + Kafka KRaft cluster.
+# wave 1: no dependencies; must be Healthy before wave 2.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: mathtrail-seaweedfs
+  name: mathtrail-kafka
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "2"
+    argocd.argoproj.io/sync-wave: "1"
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: mathtrail
   source:
     repoURL: https://github.com/MathTrail/infra-streaming
-    targetRevision: main
-    path: infra/local/helm/seaweedfs
+    targetRevision: {{ .Values.gitBranch }}
+    path: infra/local/helm/kafka
   destination:
     server: https://kubernetes.default.svc
-    namespace: streaming
+    namespace: {{ .Values.namespace }}
   syncPolicy:
     automated:
       prune: true
@@ -23,3 +26,4 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
+{{- end }}

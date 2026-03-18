@@ -1,3 +1,6 @@
+{{- if .Values.deploy }}
+# Flink operator + user-enrichment stream processing job.
+# wave 4: depends on Kafka (wave 1), Apicurio + SeaweedFS (wave 2), Debezium (wave 3).
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -11,11 +14,15 @@ spec:
   project: mathtrail
   source:
     repoURL: https://github.com/MathTrail/infra-streaming
-    targetRevision: main
+    targetRevision: {{ .Values.gitBranch }}
     path: infra/local/helm/flink
+    helm:
+      parameters:
+        - name: flink-kubernetes-operator.watchNamespaces[0]
+          value: {{ .Values.namespace }}
   destination:
     server: https://kubernetes.default.svc
-    namespace: streaming
+    namespace: {{ .Values.namespace }}
   syncPolicy:
     automated:
       prune: true
@@ -23,3 +30,4 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
+{{- end }}

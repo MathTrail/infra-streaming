@@ -18,8 +18,15 @@ dep-update:
     helm dependency update infra/local/helm/redpanda-console
 
 # Deploy all streaming components via ArgoCD in wave order
-deploy:
-    kubectl apply -f argocd/
+deploy: setup
+    #!/usr/bin/env bash
+    set -euo pipefail
+    BRANCH=$(git rev-parse --abbrev-ref HEAD)
+    for app in kafka apicurio seaweedfs debezium flink redpanda-console; do
+        helm upgrade --install mathtrail-$app infra/apps/$app \
+            --namespace argocd --create-namespace \
+            --set gitBranch="$BRANCH"
+    done
     argocd app sync mathtrail-kafka --wait
     argocd app sync mathtrail-apicurio mathtrail-seaweedfs --wait
     argocd app sync mathtrail-debezium --wait
@@ -28,8 +35,11 @@ deploy:
 
 # Remove all streaming ArgoCD Applications (cascade-deletes K8s resources)
 delete:
-    argocd app delete mathtrail-redpanda-console mathtrail-flink mathtrail-debezium \
-        mathtrail-apicurio mathtrail-seaweedfs mathtrail-kafka --cascade --yes
+    #!/usr/bin/env bash
+    set -euo pipefail
+    for app in kafka apicurio seaweedfs debezium flink redpanda-console; do
+        helm uninstall mathtrail-$app --namespace argocd --ignore-not-found 2>/dev/null || true
+    done
 
 # Sync a single app (usage: just sync mathtrail-kafka)
 sync app="mathtrail-kafka":

@@ -1,21 +1,24 @@
+{{- if .Values.deploy }}
+# Redpanda Console — Kafka UI for local observability.
+# wave 5: last; all other components must be running.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: mathtrail-kafka
+  name: mathtrail-redpanda-console
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/sync-wave: "5"
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: mathtrail
   source:
     repoURL: https://github.com/MathTrail/infra-streaming
-    targetRevision: main
-    path: infra/local/helm/kafka
+    targetRevision: {{ .Values.gitBranch }}
+    path: infra/local/helm/redpanda-console
   destination:
     server: https://kubernetes.default.svc
-    namespace: streaming
+    namespace: {{ .Values.namespace }}
   syncPolicy:
     automated:
       prune: true
@@ -23,3 +26,4 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
+{{- end }}
