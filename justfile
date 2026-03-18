@@ -42,15 +42,23 @@ delete:
     done
     just _nuke-namespace streaming
 
-# Generic: strip all resource finalizers and force-delete a namespace
+# Generic: force-delete a namespace by first triggering deletion (which terminates
+# in-namespace operators), then stripping remaining resource finalizers once operators
+# are gone and can no longer re-add them, then force-finalizing the namespace spec.
 _nuke-namespace ns:
     #!/usr/bin/env bash
     set -euo pipefail
+    # Start namespace deletion without waiting — this sends SIGTERM to all pods,
+    # including operators that would otherwise re-add finalizers to their CRs
+    kubectl delete namespace {{ ns }} --ignore-not-found --wait=false
+    # Wait until all pods are terminated (operators are gone, can't re-add finalizers)
+    kubectl wait pod --all -n {{ ns }} --for=delete --timeout=60s 2>/dev/null || true
+    # Strip finalizers from all remaining resources — now safe, no operators running
     kubectl api-resources --verbs=list --namespaced -o name 2>/dev/null \
         | xargs -I{} kubectl get {} -n {{ ns }} --no-headers -o name 2>/dev/null \
         | xargs -r -I{} kubectl patch {} -n {{ ns }} \
             --type=merge -p '{"metadata":{"finalizers":null}}' 2>/dev/null || true
-    kubectl delete namespace {{ ns }} --ignore-not-found
+    # Force-finalize the namespace spec to unblock kubernetes finalizer
     if kubectl get namespace {{ ns }} -o jsonpath='{.status.phase}' 2>/dev/null | grep -q Terminating; then
         kubectl get namespace {{ ns }} -o json \
             | python3 -c "import sys,json; d=json.load(sys.stdin); d['spec']['finalizers']=[]; print(json.dumps(d))" \
