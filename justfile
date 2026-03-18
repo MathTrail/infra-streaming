@@ -32,23 +32,27 @@ deploy: setup
 delete:
     #!/usr/bin/env bash
     set -euo pipefail
-    # Strip ArgoCD finalizers so CRs delete immediately without waiting for cascade
     for app in mathtrail-kafka mathtrail-apicurio mathtrail-seaweedfs \
                mathtrail-debezium mathtrail-flink mathtrail-redpanda-console; do
         kubectl patch application "$app" -n argocd \
             --type=merge -p '{"metadata":{"finalizers":null}}' 2>/dev/null || true
     done
-    # Uninstall Helm releases (removes Application CRs)
     for app in kafka apicurio seaweedfs debezium flink redpanda-console; do
         helm uninstall mathtrail-$app --namespace argocd --ignore-not-found 2>/dev/null || true
     done
-    # Delete workload namespace (removes all streaming K8s resources)
-    kubectl delete namespace streaming --ignore-not-found --wait=true
+    just _nuke-namespace streaming
 
-# Show status of all streaming apps
-status:
-    kubectl -n argocd get applications \
-      -l 'app.kubernetes.io/managed-by=Helm' \
-      -o custom-columns='NAME:.metadata.name,WAVE:.metadata.annotations.argocd\.argoproj\.io/sync-wave,SYNC:.status.sync.status,HEALTH:.status.health.status' \
-      --sort-by='.metadata.annotations.argocd\.argoproj\.io/sync-wave' 2>/dev/null \
-      | grep mathtrail- || echo "No streaming apps found."
+# Generic: strip all resource finalizers and force-delete a namespace
+_nuke-namespace ns:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    kubectl api-resources --verbs=list --namespaced -o name 2>/dev/null \
+        | xargs -I{} kubectl get {} -n {{ ns }} --no-headers -o name 2>/dev/null \
+        | xargs -r -I{} kubectl patch {} -n {{ ns }} \
+            --type=merge -p '{"metadata":{"finalizers":null}}' 2>/dev/null || true
+    kubectl delete namespace {{ ns }} --ignore-not-found
+    if kubectl get namespace {{ ns }} -o jsonpath='{.status.phase}' 2>/dev/null | grep -q Terminating; then
+        kubectl get namespace {{ ns }} -o json \
+            | python3 -c "import sys,json; d=json.load(sys.stdin); d['spec']['finalizers']=[]; print(json.dumps(d))" \
+            | kubectl replace --raw /api/v1/namespaces/{{ ns }}/finalize -f -
+    fi
