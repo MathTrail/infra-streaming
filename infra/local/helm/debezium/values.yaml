@@ -29,4 +29,4 @@ vault:
   authRef: vault-auth
 
 apicurio:
-  url: "http://apicurio-registry:8080/apis/ccompat/v6"
+  url: "http://mathtrail-apicurio-apicurio-registry:8080/apis/ccompat/v6"

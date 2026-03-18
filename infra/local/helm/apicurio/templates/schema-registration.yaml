@@ -82,7 +82,7 @@ spec:
             - -c
             - |
               echo "Waiting for Apicurio Registry..."
-              until curl -sf http://apicurio-registry:8080/health/ready; do
+              until curl -sf http://{{ .Release.Name }}-apicurio-registry:8080/health/ready; do
                 echo "  not ready, retrying in 5s..."
                 sleep 5
               done
@@ -95,7 +95,7 @@ spec:
             - -c
             - |
               set -e
-              REGISTRY="http://apicurio-registry:8080/apis/ccompat/v6"
+              REGISTRY="http://{{ .Release.Name }}-apicurio-registry:8080/apis/ccompat/v6"
 
               register_schema() {
                 local subject="$1"
