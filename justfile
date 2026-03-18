@@ -27,11 +27,6 @@ deploy: setup
             --namespace argocd --create-namespace \
             --set gitBranch="$BRANCH"
     done
-    argocd app sync mathtrail-kafka --wait
-    argocd app sync mathtrail-apicurio mathtrail-seaweedfs --wait
-    argocd app sync mathtrail-debezium --wait
-    argocd app sync mathtrail-flink --wait
-    argocd app sync mathtrail-redpanda-console --wait
 
 # Remove all streaming ArgoCD Applications (cascade-deletes K8s resources)
 delete:
@@ -41,14 +36,10 @@ delete:
         helm uninstall mathtrail-$app --namespace argocd --ignore-not-found 2>/dev/null || true
     done
 
-# Sync a single app (usage: just sync mathtrail-kafka)
-sync app="mathtrail-kafka":
-    argocd app sync {{ app }}
-
 # Show status of all streaming apps
 status:
-    @for app in mathtrail-kafka mathtrail-apicurio mathtrail-seaweedfs \
-                mathtrail-debezium mathtrail-flink mathtrail-redpanda-console; do \
-        echo "=== $$app ==="; \
-        argocd app get $$app 2>/dev/null || echo "not found"; \
-    done
+    kubectl -n argocd get applications \
+      -l 'app.kubernetes.io/managed-by=Helm' \
+      -o custom-columns='NAME:.metadata.name,WAVE:.metadata.annotations.argocd\.argoproj\.io/sync-wave,SYNC:.status.sync.status,HEALTH:.status.health.status' \
+      --sort-by='.metadata.annotations.argocd\.argoproj\.io/sync-wave' 2>/dev/null \
+      | grep mathtrail- || echo "No streaming apps found."
