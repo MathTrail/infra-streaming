@@ -44,6 +44,9 @@ spec:
     output:
       type: docker
       image: {{ .Values.connect.image }}
+    additionalKanikoOptions:
+      - "--insecure"
+      - "--insecure-pull"
     plugins:
       - name: debezium-postgres
         artifacts:
