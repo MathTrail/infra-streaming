@@ -59,8 +59,9 @@ _nuke-namespace ns:
         | xargs -r -I{} kubectl patch {} -n {{ ns }} \
             --type=merge -p '{"metadata":{"finalizers":null}}' 2>/dev/null || true
     # Force-finalize the namespace spec to unblock kubernetes finalizer
-    if kubectl get namespace {{ ns }} -o jsonpath='{.status.phase}' 2>/dev/null | grep -q Terminating; then
-        kubectl get namespace {{ ns }} -o json \
-            | python3 -c "import sys,json; d=json.load(sys.stdin); d['spec']['finalizers']=[]; print(json.dumps(d))" \
+    NS_JSON=$(kubectl get namespace {{ ns }} -o json 2>/dev/null)
+    if echo "$NS_JSON" | grep -q '"Terminating"'; then
+        echo "$NS_JSON" \
+            | jq '.spec.finalizers = []' \
             | kubectl replace --raw /api/v1/namespaces/{{ ns }}/finalize -f -
     fi
