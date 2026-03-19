@@ -7,6 +7,8 @@ console:
       # In prod: switch to TLS listener (9093) with KafkaUser credentials.
       brokers:
         - kafka-kafka-bootstrap:9092
+      acls:
+        enabled: false
     schemaRegistry:
       enabled: true
       urls:
