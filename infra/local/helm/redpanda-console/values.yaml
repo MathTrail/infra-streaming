@@ -7,11 +7,11 @@ console:
       # In prod: switch to TLS listener (9093) with KafkaUser credentials.
       brokers:
         - kafka-kafka-bootstrap:9092
-      schemaRegistry:
-        enabled: true
-        urls:
-          # Apicurio Confluent compat API — allows Console to decode Avro messages
-          - http://mathtrail-apicurio-apicurio-registry:8080/apis/ccompat/v6
+    schemaRegistry:
+      enabled: true
+      urls:
+        # Apicurio Confluent compat API — allows Console to decode Avro messages
+        - http://mathtrail-apicurio-apicurio-registry:8080/apis/ccompat/v6
 
   resources:
     requests:
