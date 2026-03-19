@@ -12,6 +12,13 @@ kafka-ui:
             - name: debezium
               address: http://debezium-connect-api:8083
 
+  livenessProbe:
+    httpGet:
+      path: /observability/kafka-ui/actuator/health
+  readinessProbe:
+    httpGet:
+      path: /observability/kafka-ui/actuator/health
+
   resources:
     requests:
       memory: 384Mi
