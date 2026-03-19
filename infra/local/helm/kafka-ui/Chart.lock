@@ -1,0 +1,6 @@
+dependencies:
+- name: kafka-ui
+  repository: https://MathTrail.github.io/charts/charts
+  version: 1.5.2
+digest: sha256:7ca4dd07461c91761dcf36c4d4c910e546f28b0476bd472821359f9297a814cd
+generated: "2026-03-18T21:18:20.061767408-05:00"

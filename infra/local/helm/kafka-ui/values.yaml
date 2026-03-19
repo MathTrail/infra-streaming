@@ -1,11 +1,9 @@
 kafka-ui:
+  envs:
+    config:
+      SERVER_SERVLET_CONTEXT_PATH: /observability/kafka-ui
+
   yamlApplicationConfig:
-    server:
-      servlet:
-        context-path: /observability/kafka-ui
-    management:
-      server:
-        port: 8081
     kafka:
       clusters:
         - name: local
@@ -14,15 +12,6 @@ kafka-ui:
           kafkaConnect:
             - name: debezium
               address: http://debezium-connect-api:8083
-
-  livenessProbe:
-    httpGet:
-      path: /actuator/health
-      port: 8081
-  readinessProbe:
-    httpGet:
-      path: /actuator/health
-      port: 8081
 
   resources:
     requests:
