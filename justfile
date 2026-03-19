@@ -47,10 +47,10 @@ delete:
 # are gone and can no longer re-add them, then force-finalizing the namespace spec.
 _nuke-namespace ns:
     #!/usr/bin/env bash
-    set -euo pipefail
+    # No strict error mode — this is a cleanup recipe, must be resilient
     # Start namespace deletion without waiting — this sends SIGTERM to all pods,
     # including operators that would otherwise re-add finalizers to their CRs
-    kubectl delete namespace {{ ns }} --ignore-not-found --wait=false
+    kubectl delete namespace {{ ns }} --ignore-not-found --wait=false 2>/dev/null || true
     # Wait until all pods are terminated (operators are gone, can't re-add finalizers)
     kubectl wait pod --all -n {{ ns }} --for=delete --timeout=60s 2>/dev/null || true
     # Strip finalizers from all remaining resources — now safe, no operators running
@@ -59,9 +59,9 @@ _nuke-namespace ns:
         | xargs -r -I{} kubectl patch {} -n {{ ns }} \
             --type=merge -p '{"metadata":{"finalizers":null}}' 2>/dev/null || true
     # Force-finalize the namespace spec to unblock kubernetes finalizer
-    NS_JSON=$(kubectl get namespace {{ ns }} -o json 2>/dev/null)
+    NS_JSON=$(kubectl get namespace {{ ns }} -o json 2>/dev/null || true)
     if echo "$NS_JSON" | grep -q '"Terminating"'; then
         echo "$NS_JSON" \
             | jq '.spec.finalizers = []' \
-            | kubectl replace --raw /api/v1/namespaces/{{ ns }}/finalize -f -
+            | kubectl replace --raw /api/v1/namespaces/{{ ns }}/finalize -f - 2>/dev/null || true
     fi
