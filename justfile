@@ -15,14 +15,14 @@ dep-update:
     helm dependency update infra/local/helm/seaweedfs
     helm dependency update infra/local/helm/debezium
     helm dependency update infra/local/helm/flink
-    helm dependency update infra/local/helm/redpanda-console
+    helm dependency update infra/local/helm/kafka-ui
 
 # Deploy all streaming components via ArgoCD in wave order
 deploy: setup
     #!/usr/bin/env bash
     set -euo pipefail
     BRANCH=$(git rev-parse --abbrev-ref HEAD)
-    for app in kafka apicurio seaweedfs debezium flink redpanda-console; do
+    for app in kafka apicurio seaweedfs debezium flink kafka-ui; do
         helm upgrade --install mathtrail-$app infra/apps/$app \
             --namespace argocd --create-namespace \
             --set gitBranch="$BRANCH"
@@ -33,11 +33,11 @@ delete:
     #!/usr/bin/env bash
     set -euo pipefail
     for app in mathtrail-kafka mathtrail-apicurio mathtrail-seaweedfs \
-               mathtrail-debezium mathtrail-flink mathtrail-redpanda-console; do
+               mathtrail-debezium mathtrail-flink mathtrail-kafka-ui; do
         kubectl patch application "$app" -n argocd \
             --type=merge -p '{"metadata":{"finalizers":null}}' 2>/dev/null || true
     done
-    for app in kafka apicurio seaweedfs debezium flink redpanda-console; do
+    for app in kafka apicurio seaweedfs debezium flink kafka-ui; do
         helm uninstall mathtrail-$app --namespace argocd --ignore-not-found 2>/dev/null || true
     done
     just _nuke-namespace streaming

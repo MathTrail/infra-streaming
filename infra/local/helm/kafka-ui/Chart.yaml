@@ -1,8 +1,8 @@
 apiVersion: v2
-name: redpanda-console
-description: Redpanda Console — Kafka UI for local development observability
+name: kafka-ui
+description: kafka-ui — Kafka UI for local development observability
 version: 0.1.0
 dependencies:
-  - name: console
+  - name: kafka-ui
     version: "*"
     repository: "https://MathTrail.github.io/charts/charts"
