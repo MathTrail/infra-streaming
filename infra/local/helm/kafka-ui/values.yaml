@@ -2,7 +2,7 @@ kafka-ui:
   envs:
     config:
       SERVER_SERVLET_CONTEXT_PATH: /observability/kafka-ui
-      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=75.0 -XX:+UseContainerSupport"
+      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=50.0 -XX:MaxMetaspaceSize=150m -XX:+UseContainerSupport"
 
   yamlApplicationConfig:
     kafka:
