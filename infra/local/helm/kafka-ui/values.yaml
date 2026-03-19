@@ -2,6 +2,7 @@ kafka-ui:
   envs:
     config:
       SERVER_SERVLET_CONTEXT_PATH: /observability/kafka-ui
+      JAVA_OPTS: "-XX:MaxRAMPercentage=75.0 -XX:+UseContainerSupport"
 
   yamlApplicationConfig:
     kafka:
@@ -15,7 +16,7 @@ kafka-ui:
 
   resources:
     requests:
-      memory: 384Mi
+      memory: 256Mi
       cpu: 100m
     limits:
       memory: 512Mi
