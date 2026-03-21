@@ -16,13 +16,15 @@ spec:
     repoURL: https://github.com/MathTrail/infra-streaming
     targetRevision: {{ .Values.gitBranch }}
     path: infra/local/helm/flink
-    helm:
-      parameters:
-        - name: flink-kubernetes-operator.watchNamespaces[0]
-          value: {{ .Values.namespace }}
   destination:
     server: https://kubernetes.default.svc
     namespace: {{ .Values.namespace }}
+  ignoreDifferences:
+    - group: apiextensions.k8s.io
+      kind: CustomResourceDefinition
+      jqPathExpressions:
+        - .spec.conversion
+        - .spec.versions[].additionalPrinterColumns[].priority
   syncPolicy:
     automated:
       prune: true
@@ -30,4 +32,5 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
+      - RespectIgnoreDifferences=true
 {{- end }}
