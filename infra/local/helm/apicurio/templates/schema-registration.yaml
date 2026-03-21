@@ -95,19 +95,22 @@ spec:
             - -c
             - |
               set -e
-              REGISTRY="http://{{ .Release.Name }}-apicurio-registry:8080/apis/ccompat/v7"
+              # Use Apicurio v2 API — schema sent as raw file body, no JSON escaping needed.
+              # X-Registry-IfExists: UPDATE — idempotent re-registration on every Helm upgrade.
+              # groupId=default maps to ccompat subjects used by Flink and Debezium converters.
+              REGISTRY="http://{{ .Release.Name }}-apicurio-registry:8080/apis/registry/v2/groups/default/artifacts"
 
               register_schema() {
                 local subject="$1"
                 local schema_file="$2"
                 echo "Registering subject: $subject"
-                # Build JSON payload: {"schemaType": "AVRO", "schema": "<escaped schema string>"}
-                # schemaType must be explicit — Apicurio 3.x does not auto-detect from content
-                schema=$(cat "$schema_file" | tr -d '\n' | sed 's/"/\\"/g')
                 response=$(curl -sf -X POST \
-                  -H "Content-Type: application/vnd.schemaregistry.v1+json" \
-                  -d "{\"schemaType\": \"AVRO\", \"schema\": \"${schema}\"}" \
-                  "${REGISTRY}/subjects/${subject}/versions")
+                  -H "Content-Type: application/json" \
+                  -H "X-Registry-ArtifactId: ${subject}" \
+                  -H "X-Registry-ArtifactType: AVRO" \
+                  -H "X-Registry-IfExists: UPDATE" \
+                  --data-binary "@${schema_file}" \
+                  "${REGISTRY}")
                 echo "  -> $response"
               }
 

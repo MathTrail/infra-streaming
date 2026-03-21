@@ -16,7 +16,7 @@ connect:
 
 postgres:
   # Kratos PostgreSQL host (Bitnami chart service name)
-  host: identity-postgres-postgresql
+  host: identity-postgres-postgresql.identity.svc.cluster.local
   port: "5432"
   database: kratos
   # Secret created by VSO from Vault KV v2 path: local/mathtrail-debezium-kratos
