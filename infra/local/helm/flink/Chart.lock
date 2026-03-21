@@ -1,0 +1,6 @@
+dependencies:
+- name: flink-kubernetes-operator
+  repository: https://MathTrail.github.io/charts/charts
+  version: 1.14.0
+digest: sha256:e8b943ae23e33bf00b5d4e21eac369a0352bfd6ea81c628b3190d4233503e5c5
+generated: "2026-03-20T22:36:18.900555285-05:00"

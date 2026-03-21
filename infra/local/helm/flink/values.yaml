@@ -1,5 +1,7 @@
 flink-kubernetes-operator:
-  # Namespace is set via ArgoCD Application helm.parameters (STREAMING_NAMESPACE from global.env)
+  # Empty = watch all namespaces.
+  # FlinkDeployments from microservice charts (e.g. mentor-api in mathtrail ns)
+  # are picked up automatically — no additional configuration needed here.
   watchNamespaces: []
 
   resources:
@@ -9,30 +11,3 @@ flink-kubernetes-operator:
     limits:
       memory: 512Mi
       cpu: 500m
-
-# FlinkDeployment configuration (user-enrichment job)
-job:
-  image: apache/flink:1.20-scala_2.12-java17
-  flinkVersion: v1_20
-
-  kafka:
-    bootstrapServers: kafka-kafka-tls-bootstrap:9093
-    # KafkaUser "flink" secret — created by Strimzi UserOperator
-    tlsSecretName: flink
-    jksTruststorePassword: changeit
-    jksKeystorePassword: changeit
-
-  seaweedfs:
-    endpoint: http://mathtrail-seaweedfs-s3:8333
-    accessKey: flinkaccess
-    secretKey: flinksecret
-
-  apicurio:
-    url: http://mathtrail-apicurio-apicurio-registry:8080/apis/ccompat/v7
-
-  checkpoints:
-    dir: s3://flink/checkpoints
-    savepoints: s3://flink/savepoints
-    intervalMs: "60000"
-
-  jobJarUri: "local:///opt/flink/usrlib/user-enrichment.jar"

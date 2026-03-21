@@ -3,10 +3,12 @@
 
 set shell := ["bash", "-c"]
 
-# Add required Helm repositories (needed for local `helm dep update`)
+# Add required Helm repositories and build infrastructure images
 setup:
     helm repo add mathtrail https://MathTrail.github.io/charts/charts
     helm repo update
+    cd flink-jobs/sql-runner && docker build -t k3d-mathtrail-registry:5000/flink-sql-runner:1.20 .
+    docker push k3d-mathtrail-registry:5000/flink-sql-runner:1.20
 
 # Update Chart.lock for all Helm charts (run after adding/changing charts)
 dep-update:
