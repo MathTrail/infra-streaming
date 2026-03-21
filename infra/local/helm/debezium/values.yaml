@@ -19,6 +19,8 @@ postgres:
   host: identity-postgres-postgresql.identity.svc.cluster.local
   port: "5432"
   database: kratos
+  # Postgres superuser password (Bitnami chart default for local dev)
+  adminPassword: mathtrail
   # Secret created by VSO from Vault KV v2 path: local/mathtrail-debezium-kratos
   credentialsSecret: debezium-pg-creds
 

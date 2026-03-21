@@ -34,6 +34,10 @@ spec:
     slot.name: debezium_identities
     plugin.name: pgoutput
 
+    # Publication must be created manually by superuser — debezium_replication cannot create FOR ALL TABLES
+    publication.name: dbz_publication
+    publication.autocreate.mode: disabled
+
     # Tables to capture — both identity tables needed for Flink Interval JOIN
     table.include.list: "public.identities,public.identity_verifiable_addresses"
     topic.prefix: identity
