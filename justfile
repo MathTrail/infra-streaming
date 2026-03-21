@@ -7,8 +7,10 @@ set shell := ["bash", "-c"]
 setup:
     helm repo add mathtrail https://MathTrail.github.io/charts/charts
     helm repo update
-    cd flink-jobs/sql-runner && docker build -t k3d-mathtrail-registry:5000/flink-sql-runner:1.20 .
-    docker push k3d-mathtrail-registry:5000/flink-sql-runner:1.20
+    cd flink-jobs/sql-runner && buildah --storage-driver=vfs bud --log-level=error \
+        --tag k3d-mathtrail-registry:5000/flink-sql-runner:1.20 .
+    buildah --storage-driver=vfs push --log-level=error --tls-verify=false \
+        k3d-mathtrail-registry:5000/flink-sql-runner:1.20
 
 # Update Chart.lock for all Helm charts (run after adding/changing charts)
 dep-update:
