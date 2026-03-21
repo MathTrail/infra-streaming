@@ -101,11 +101,12 @@ spec:
                 local subject="$1"
                 local schema_file="$2"
                 echo "Registering subject: $subject"
-                # Build JSON payload: {"schema": "<escaped schema string>"}
+                # Build JSON payload: {"schemaType": "AVRO", "schema": "<escaped schema string>"}
+                # schemaType must be explicit — Apicurio 3.x does not auto-detect from content
                 schema=$(cat "$schema_file" | tr -d '\n' | sed 's/"/\\"/g')
                 response=$(curl -sf -X POST \
                   -H "Content-Type: application/vnd.schemaregistry.v1+json" \
-                  -d "{\"schema\": \"${schema}\"}" \
+                  -d "{\"schemaType\": \"AVRO\", \"schema\": \"${schema}\"}" \
                   "${REGISTRY}/subjects/${subject}/versions")
                 echo "  -> $response"
               }
