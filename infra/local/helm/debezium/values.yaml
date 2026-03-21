@@ -11,6 +11,8 @@ connect:
   image: k3d-mathtrail-registry:5000/debezium-connect:0.2.0
   # Debezium PostgreSQL connector plugin URL
   debeziumPluginUrl: "https://repo1.maven.org/maven2/io/debezium/debezium-connector-postgres/3.1.1.Final/debezium-connector-postgres-3.1.1.Final-plugin.tar.gz"
+  # Apicurio connect converter distribution (includes AvroConverter + all deps)
+  apicurioConverterUrl: "https://repo1.maven.org/maven2/io/apicurio/apicurio-registry-distro-connect-converter/3.2.0/apicurio-registry-distro-connect-converter-3.2.0.zip"
 
 postgres:
   # Kratos PostgreSQL host (Bitnami chart service name)
@@ -29,5 +31,4 @@ vault:
   authRef: vault-auth
 
 apicurio:
-  url: "http://mathtrail-apicurio-apicurio-registry:8080/apis/registry/v2"
-  serdesUrl: "https://repo1.maven.org/maven2/io/apicurio/apicurio-registry-serdes-avro-serde/3.2.0/apicurio-registry-serdes-avro-serde-3.2.0-all.jar"
+  url: "http://mathtrail-apicurio-apicurio-registry:8080/apis/registry/v3"

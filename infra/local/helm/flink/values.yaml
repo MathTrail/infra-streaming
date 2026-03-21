@@ -28,7 +28,7 @@ job:
     secretKey: flinksecret
 
   apicurio:
-    url: http://apicurio-registry:8080/apis/ccompat/v6
+    url: http://mathtrail-apicurio-apicurio-registry:8080/apis/ccompat/v7
 
   checkpoints:
     dir: s3://flink/checkpoints
