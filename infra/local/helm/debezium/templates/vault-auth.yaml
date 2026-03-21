@@ -1,0 +1,15 @@
+# VSO VaultAuth — authenticates VSO to Vault using Kubernetes auth method.
+# Bound to the debezium-connect ServiceAccount (created by Strimzi) in streaming namespace.
+# Vault K8s auth role "debezium-role" must be configured in infra repo.
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultAuth
+metadata:
+  name: {{ .Values.vault.authRef }}
+spec:
+  method: kubernetes
+  mount: kubernetes
+  kubernetes:
+    role: debezium-role
+    serviceAccount: debezium-connect
+    audiences:
+      - vault

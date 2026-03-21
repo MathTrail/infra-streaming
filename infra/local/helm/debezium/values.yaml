@@ -22,7 +22,7 @@ postgres:
 
 vault:
   # Vault KV v2 mount
-  mount: kv
+  mount: secret
   # Path within the mount (must contain fields: username, password)
   path: local/mathtrail-debezium-kratos
   # VSO VaultAuth reference (must already exist in the cluster)
