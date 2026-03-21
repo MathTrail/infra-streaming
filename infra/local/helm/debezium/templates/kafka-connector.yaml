@@ -25,8 +25,8 @@ spec:
     # PostgreSQL connection (credentials via FileConfigProvider from mounted Secret)
     database.hostname: {{ .Values.postgres.host }}
     database.port: {{ .Values.postgres.port | quote }}
-    database.user: "${file:/opt/kafka/external-configuration/debezium-pg-creds/username}"
-    database.password: "${file:/opt/kafka/external-configuration/debezium-pg-creds/password}"
+    database.user: "${dir:/opt/kafka/external-configuration/debezium-pg-creds:username}"
+    database.password: "${dir:/opt/kafka/external-configuration/debezium-pg-creds:password}"
     database.dbname: {{ .Values.postgres.database }}
     database.server.name: kratos
 

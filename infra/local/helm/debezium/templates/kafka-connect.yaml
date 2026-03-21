@@ -56,9 +56,10 @@ spec:
             url: {{ .Values.connect.apicurioConverterUrl }}
 
   config:
-    # FileConfigProvider — reads credentials from mounted Secret files
-    config.providers: file
-    config.providers.file.class: org.apache.kafka.common.config.provider.FileConfigProvider
+    # DirectoryConfigProvider — reads individual files from mounted Secret directory
+    # Syntax: ${dir:/opt/kafka/external-configuration/<secret-name>:<key>}
+    config.providers: dir
+    config.providers.dir.class: org.apache.kafka.common.config.provider.DirectoryConfigProvider
 
     # Avro via Apicurio AvroConverter in Confluent-compatible wire format
     # as-confluent + use-id=contentId → [0x00][4-byte int][avro] — readable by Flink avro-confluent
