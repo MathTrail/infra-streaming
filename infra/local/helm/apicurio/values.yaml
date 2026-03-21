@@ -12,3 +12,7 @@ apicurio-registry:
       limits:
         memory: 512Mi
         cpu: 500m
+
+  sync:
+    # Schemas are registered via Job — sync CRD operator not needed
+    enabled: false

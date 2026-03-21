@@ -1,0 +1,6 @@
+dependencies:
+- name: apicurio-registry
+  repository: https://MathTrail.github.io/charts/charts
+  version: 3.8.0
+digest: sha256:8aec1663ffdb9ff4e4fcf8a2a18f4311a650fd5a313f0677be4b4dfc68e6bfa1
+generated: "2026-03-20T19:34:43.851450205-05:00"
