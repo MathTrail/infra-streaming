@@ -76,7 +76,11 @@ spec:
     value.converter.apicurio.registry.headers.enabled: "false"
     value.converter.apicurio.registry.auto-register: "true"
 
-    # Internal Connect topics (single-node local dev)
+    # Internal Connect topics — names must match KafkaUser ACL prefix (connect-debezium-)
+    group.id: connect-debezium
+    offset.storage.topic: connect-debezium-offsets
+    config.storage.topic: connect-debezium-configs
+    status.storage.topic: connect-debezium-status
     offset.storage.replication.factor: "1"
     config.storage.replication.factor: "1"
     status.storage.replication.factor: "1"
