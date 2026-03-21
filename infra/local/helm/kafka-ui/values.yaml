@@ -9,7 +9,7 @@ kafka-ui:
       clusters:
         - name: local
           bootstrapServers: kafka-kafka-bootstrap:9092
-          schemaRegistry: http://mathtrail-apicurio-apicurio-registry:8080/apis/ccompat/v6
+          schemaRegistry: http://mathtrail-apicurio-apicurio-registry:8080/apis/ccompat/v7
           kafkaConnect:
             - name: debezium
               address: http://debezium-connect-api:8083
