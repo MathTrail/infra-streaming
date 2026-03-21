@@ -2,7 +2,7 @@
 
 kafka:
   # Bootstrap server for Strimzi KafkaConnect (TLS listener)
-  bootstrapServers: kafka-kafka-tls-bootstrap:9093
+  bootstrapServers: kafka-kafka-bootstrap:9093
   # Kafka protocol version — must match the Strimzi Kafka CR version
   version: "4.1.1"
 

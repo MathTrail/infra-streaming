@@ -95,7 +95,7 @@ spec:
             - -c
             - |
               set -e
-              REGISTRY="http://{{ .Release.Name }}-apicurio-registry:8080/apis/ccompat/v6"
+              REGISTRY="http://{{ .Release.Name }}-apicurio-registry:8080/apis/ccompat/v7"
 
               register_schema() {
                 local subject="$1"
