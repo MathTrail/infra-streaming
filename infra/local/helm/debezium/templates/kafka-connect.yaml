@@ -52,17 +52,21 @@ spec:
         artifacts:
           - type: tgz
             url: {{ .Values.connect.debeziumPluginUrl }}
+      - name: apicurio-registry-serdes
+        artifacts:
+          - type: jar
+            url: {{ .Values.apicurio.serdesUrl }}
 
   config:
     # FileConfigProvider — reads credentials from mounted Secret files
     config.providers: file
     config.providers.file.class: org.apache.kafka.common.config.provider.FileConfigProvider
 
-    # Avro serialization via Apicurio Confluent compat API
-    key.converter: io.confluent.kafka.serializers.KafkaAvroSerializer
-    value.converter: io.confluent.kafka.serializers.KafkaAvroSerializer
-    key.converter.schema.registry.url: {{ .Values.apicurio.url }}
-    value.converter.schema.registry.url: {{ .Values.apicurio.url }}
+    # Avro serialization via Apicurio Registry native serdes
+    key.converter: io.apicurio.registry.serde.avro.AvroKafkaSerializer
+    value.converter: io.apicurio.registry.serde.avro.AvroKafkaSerializer
+    key.converter.apicurio.registry.url: {{ .Values.apicurio.url }}
+    value.converter.apicurio.registry.url: {{ .Values.apicurio.url }}
 
     # Internal Connect topics (single-node local dev)
     offset.storage.replication.factor: "1"

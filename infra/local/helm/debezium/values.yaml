@@ -8,7 +8,7 @@ kafka:
 
 connect:
   # Container image output for the Strimzi build (must be accessible from k3d cluster)
-  image: k3d-mathtrail-registry:5000/debezium-connect:0.1.0
+  image: k3d-mathtrail-registry:5000/debezium-connect:0.2.0
   # Debezium PostgreSQL connector plugin URL
   debeziumPluginUrl: "https://repo1.maven.org/maven2/io/debezium/debezium-connector-postgres/3.1.1.Final/debezium-connector-postgres-3.1.1.Final-plugin.tar.gz"
 
@@ -29,4 +29,5 @@ vault:
   authRef: vault-auth
 
 apicurio:
-  url: "http://mathtrail-apicurio-apicurio-registry:8080/apis/ccompat/v6"
+  url: "http://mathtrail-apicurio-apicurio-registry:8080/apis/registry/v2"
+  serdesUrl: "https://repo1.maven.org/maven2/io/apicurio/apicurio-registry-serdes-avro-serde/3.2.0/apicurio-registry-serdes-avro-serde-3.2.0-all.jar"
