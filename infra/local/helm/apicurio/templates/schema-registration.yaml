@@ -82,7 +82,7 @@ spec:
             - -c
             - |
               echo "Waiting for Apicurio Registry..."
-              until curl -sf http://{{ .Release.Name }}-apicurio-registry:8080/health/ready; do
+              until curl -sf http://{{ .Release.Name }}-apicurio-registry:8080/apis/registry/v3/system/info; do
                 echo "  not ready, retrying in 5s..."
                 sleep 5
               done

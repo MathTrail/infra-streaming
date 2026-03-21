@@ -5,11 +5,11 @@ apicurio-registry:
       tag: "3.2.0"
       persistenceSuffix: false
 
-    # Chart probes are hardcoded to /health/* (2.x paths).
-    # Restore legacy path so probes work without patching the chart.
-    extraEnv:
-      - name: QUARKUS_SMALLRYE_HEALTH_ROOT_PATH
-        value: /health
+    # /health/* paths don't exist in Apicurio 3.x — only registry API responds
+    livenessProbe:
+      path: /apis/registry/v3/system/info
+    readinessProbe:
+      path: /apis/registry/v3/system/info
 
     resources:
       requests:
