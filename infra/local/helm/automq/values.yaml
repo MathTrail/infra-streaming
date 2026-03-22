@@ -1,0 +1,48 @@
+kafka:
+  # AutoMQ image override — Bitnami Kafka chart with AutoMQ binary
+  global:
+    security:
+      allowInsecureImages: true
+  image:
+    registry: automqinc
+    repository: automq
+    tag: "1.6.4-bitnami"
+
+  # AutoMQ S3 config — passed as server.properties entries
+  extraConfig: |
+    automq.s3.endpoint=http://minio:9000
+    automq.s3.bucket=automq-data
+    automq.s3.region=us-east-1
+    automq.s3.path.style.access=true
+
+  # S3 credentials injected from VSO Secret (automq-s3-creds)
+  extraEnvVars:
+    - name: AUTOMQ_S3_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+          name: automq-s3-creds
+          key: access-key
+    - name: AUTOMQ_S3_SECRET_KEY
+      valueFrom:
+        secretKeyRef:
+          name: automq-s3-creds
+          key: secret-key
+
+  # SASL/SCRAM-SHA-512
+  sasl:
+    enabledMechanisms: SCRAM-SHA-512
+    interbrokerMechanism: SCRAM-SHA-512
+    # Users defined in Vault; provisioned via automq-risingwave-scram, automq-mentor-api-scram, automq-kafka-ui-scram secrets
+
+  listeners:
+    client:
+      protocol: SASL_PLAINTEXT
+    interbroker:
+      protocol: SASL_PLAINTEXT
+
+  persistence:
+    enabled: true
+    size: 20Gi
+    # IMPORTANT: use SSD StorageClass for acceptable WAL write latency.
+    # k3d default (hostpath) is acceptable for local dev.
+    storageClass: ""

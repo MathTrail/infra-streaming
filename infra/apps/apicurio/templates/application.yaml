@@ -1,13 +1,13 @@
 {{- if .Values.deploy }}
-# Apicurio Registry — Avro schema registry for Kafka topics.
-# wave 2: parallel with seaweedfs; depends on Kafka (wave 1).
+# Apicurio Registry — Protobuf schema registry for AutoMQ topics.
+# wave 3: depends on AutoMQ (wave 2) — in case kafkasql persistence is enabled.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: mathtrail-apicurio
+  name: streaming-apicurio
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "2"
+    argocd.argoproj.io/sync-wave: "3"
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:

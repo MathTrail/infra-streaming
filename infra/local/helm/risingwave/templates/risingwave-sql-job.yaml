@@ -1,0 +1,92 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: risingwave-sql-setup
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  backoffLimit: 10
+  template:
+    spec:
+      restartPolicy: OnFailure
+      initContainers:
+        # Substitute ${ENV_VAR} placeholders in setup.sql using envsubst
+        - name: prepare-sql
+          image: alpine:3.20
+          command:
+            - sh
+            - -c
+            - |
+              apk add --no-cache gettext
+              envsubst < /sql-template/setup.sql > /sql-rendered/setup.sql
+              echo "SQL rendered:"
+              cat /sql-rendered/setup.sql
+          env:
+            - name: PG_HOST
+              value: {{ .Values.cdcSource.pgHost | quote }}
+            - name: PG_PORT
+              value: {{ .Values.cdcSource.pgPort | quote }}
+            - name: PG_DATABASE
+              value: {{ .Values.cdcSource.pgDatabase | quote }}
+            - name: PG_USER
+              valueFrom:
+                secretKeyRef:
+                  name: risingwave-pg-creds
+                  key: username
+            - name: PG_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: risingwave-pg-creds
+                  key: password
+            - name: AUTOMQ_BOOTSTRAP_SERVER
+              value: {{ .Values.automqSink.bootstrapServer | quote }}
+            - name: AUTOMQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: risingwave-automq-scram
+                  key: username
+            - name: AUTOMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: risingwave-automq-scram
+                  key: password
+            - name: APICURIO_URL
+              value: {{ .Values.automqSink.apicurioUrl | quote }}
+          volumeMounts:
+            - name: sql-template
+              mountPath: /sql-template
+            - name: sql-rendered
+              mountPath: /sql-rendered
+      containers:
+        - name: risingwave-sql
+          # psql-compatible client for RisingWave (postgres wire protocol on port 4566)
+          image: bitnami/postgresql:16
+          command:
+            - bash
+            - -c
+            - |
+              set -e
+              echo "Waiting for RisingWave frontend to be ready..."
+              until psql -h risingwave-frontend -p 4566 -U root -d dev -c "SELECT 1" > /dev/null 2>&1; do
+                echo "RisingWave not ready, retrying in 5s..."
+                sleep 5
+              done
+
+              echo "Executing RisingWave SQL setup..."
+              psql -h risingwave-frontend -p 4566 -U root -d dev -f /sql-rendered/setup.sql
+
+              echo "RisingWave SQL setup complete."
+          env:
+            - name: PGPASSWORD
+              value: ""  # RisingWave has no password by default in dev mode
+          volumeMounts:
+            - name: sql-rendered
+              mountPath: /sql-rendered
+      volumes:
+        - name: sql-template
+          configMap:
+            name: risingwave-setup-sql
+        - name: sql-rendered
+          emptyDir: {}

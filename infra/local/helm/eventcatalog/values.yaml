@@ -1,0 +1,20 @@
+image:
+  repository: k3d-mathtrail-registry.localhost:5050/eventcatalog
+  tag: latest
+  pullPolicy: Always
+
+basePath: /observability/eventcatalog
+
+replicaCount: 1
+
+service:
+  type: ClusterIP
+  port: 80
+
+resources:
+  requests:
+    memory: 64Mi
+    cpu: 50m
+  limits:
+    memory: 128Mi
+    cpu: 200m

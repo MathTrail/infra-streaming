@@ -1,8 +1,0 @@
-apiVersion: v2
-name: kafka
-description: Strimzi Kafka operator + cluster for MathTrail (local dev)
-version: 0.1.0
-dependencies:
-  - name: strimzi-kafka-operator
-    version: "*"
-    repository: "https://MathTrail.github.io/charts/charts"

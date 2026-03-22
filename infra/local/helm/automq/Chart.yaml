@@ -1,0 +1,9 @@
+apiVersion: v2
+name: automq-local
+description: AutoMQ local wrapper for MathTrail streaming namespace
+type: application
+version: 0.1.0
+dependencies:
+  - name: kafka
+    version: "*"
+    repository: "https://MathTrail.github.io/charts/charts"

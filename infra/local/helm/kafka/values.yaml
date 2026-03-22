@@ -1,4 +1,0 @@
-# Strimzi Kafka Operator + Kafka cluster local development values
-
-strimzi-kafka-operator:
-  watchAnyNamespace: true

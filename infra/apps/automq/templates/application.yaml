@@ -1,13 +1,13 @@
 {{- if .Values.deploy }}
-# kafka-ui — Kafka UI for local observability (AutoMQ + Apicurio).
-# wave 5: depends on AutoMQ (wave 2) and Apicurio (wave 3).
+# AutoMQ — cloud-native Kafka-compatible broker using MinIO for tiered storage.
+# wave 2: depends on MinIO (wave 1).
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: streaming-kafka-ui
+  name: streaming-automq
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "5"
+    argocd.argoproj.io/sync-wave: "2"
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
@@ -15,7 +15,7 @@ spec:
   source:
     repoURL: https://github.com/MathTrail/infra-streaming
     targetRevision: {{ .Values.gitBranch }}
-    path: infra/local/helm/kafka-ui
+    path: infra/local/helm/automq
   destination:
     server: https://kubernetes.default.svc
     namespace: {{ .Values.namespace }}

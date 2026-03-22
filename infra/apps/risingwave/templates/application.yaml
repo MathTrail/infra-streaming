@@ -1,13 +1,13 @@
 {{- if .Values.deploy }}
-# kafka-ui — Kafka UI for local observability (AutoMQ + Apicurio).
-# wave 5: depends on AutoMQ (wave 2) and Apicurio (wave 3).
+# RisingWave — unified CDC source (replaces Debezium) + stream processing (replaces Flink).
+# wave 4: depends on MinIO (wave 1), AutoMQ (wave 2), Apicurio (wave 3), and PostgreSQL (external).
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: streaming-kafka-ui
+  name: streaming-risingwave
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "5"
+    argocd.argoproj.io/sync-wave: "4"
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
@@ -15,7 +15,7 @@ spec:
   source:
     repoURL: https://github.com/MathTrail/infra-streaming
     targetRevision: {{ .Values.gitBranch }}
-    path: infra/local/helm/kafka-ui
+    path: infra/local/helm/risingwave
   destination:
     server: https://kubernetes.default.svc
     namespace: {{ .Values.namespace }}

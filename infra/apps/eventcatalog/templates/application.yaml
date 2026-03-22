@@ -1,10 +1,11 @@
 {{- if .Values.deploy }}
-# kafka-ui — Kafka UI for local observability (AutoMQ + Apicurio).
-# wave 5: depends on AutoMQ (wave 2) and Apicurio (wave 3).
+# EventCatalog — event-driven architecture documentation portal.
+# wave 5: independent, deployed last alongside kafka-ui.
+# Image built from contracts repo (contracts/eventcatalog/).
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: streaming-kafka-ui
+  name: streaming-eventcatalog
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "5"
@@ -15,7 +16,7 @@ spec:
   source:
     repoURL: https://github.com/MathTrail/infra-streaming
     targetRevision: {{ .Values.gitBranch }}
-    path: infra/local/helm/kafka-ui
+    path: infra/local/helm/eventcatalog
   destination:
     server: https://kubernetes.default.svc
     namespace: {{ .Values.namespace }}

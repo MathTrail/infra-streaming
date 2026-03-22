@@ -1,0 +1,9 @@
+apiVersion: v2
+name: risingwave-local
+description: RisingWave local wrapper for MathTrail streaming namespace
+type: application
+version: 0.1.0
+dependencies:
+  - name: risingwave
+    version: "*"
+    repository: "https://MathTrail.github.io/charts/charts"

@@ -1,0 +1,32 @@
+risingwave:
+  risingwave:
+    stateStore:
+      s3:
+        enabled: true
+        endpoint: "http://minio:9000"
+        bucket: "risingwave-data"
+        region: "us-east-1"
+        credentials:
+          existingSecret: "risingwave-minio-creds"
+          accessKey: "access-key"
+          secretKey: "secret-key"
+
+# CDC source configuration — used by cdc-setup-job and risingwave-sql-job
+# Values come from VSO-synced Secrets (see vault-static-secrets.yaml)
+cdcSource:
+  pgHost: "kratos-postgresql"
+  pgPort: "5432"
+  pgDatabase: "kratos"
+  pgSchema: "public"
+  # credentialsSecret: risingwave-pg-creds (username/password keys)
+  slotName: "risingwave_cdc"
+  publicationName: "risingwave_pub"
+  tables:
+    - "public.identities"
+    - "public.identity_verifiable_addresses"
+
+# AutoMQ sink configuration
+automqSink:
+  bootstrapServer: "automq:9092"
+  # credentialsSecret: risingwave-automq-scram (username/password keys)
+  apicurioUrl: "http://apicurio:8080/apis/ccompat/v7"

@@ -1,61 +1,70 @@
 # Schema registration Job — runs after Apicurio is ready.
-# Registers 3 Avro schemas via Confluent compat API (subjects: <topic>-value).
-# Apicurio ephemeral mode loses schemas on pod restart → Job is re-run on each Helm upgrade.
-# Subjects follow Confluent naming convention so Flink's avro-confluent format can resolve them.
-
+# Registers 3 Protobuf schemas via Confluent compat v7 API.
+#
+# Registration endpoint: POST /apis/ccompat/v7/subjects/{subject}/versions
+# Using ccompat API (not v2 API) ensures subject names match exactly what
+# RisingWave uses when resolving schemas via FORMAT ENCODE PROTOBUF.
+#
+# Subject naming: {package}.{MessageName} — e.g. students.v1.StudentOnboardingReady
+# This avoids the default-{artifactId} prefix that v2 API would produce.
+#
+# Schemas are self-contained (no import directives) — string types throughout,
+# no google.protobuf.Timestamp — so plain POST works without references API.
+#
+# Apicurio ephemeral mode loses schemas on pod restart → Job re-runs on each upgrade.
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: avro-schemas
+  name: proto-schemas
 data:
-  identity.users.created-value.json: |
-    {
-      "type": "record",
-      "name": "KratosIdentity",
-      "namespace": "io.mathtrail.debezium",
-      "fields": [
-        {"name": "id",        "type": "string",           "default": ""},
-        {"name": "schema_id", "type": "string",           "default": ""},
-        {"name": "nid",       "type": ["null", "string"], "default": null},
-        {"name": "traits",    "type": "string",           "default": "{}"},
-        {"name": "state",     "type": "string",           "default": "active"},
-        {"name": "__op",      "type": "string",           "default": ""},
-        {"name": "__ts_ms",   "type": "long",             "default": 0}
-      ]
+  # students.v1.StudentOnboardingReady
+  # Source: contracts/proto/students/v1/events.proto
+  students.v1.StudentOnboardingReady.proto: |
+    syntax = "proto3";
+    package students.v1;
+    option go_package = "github.com/mathtrail/contracts/gen/go/students/v1;studentsv1";
+    message StudentOnboardingReady {
+      string event_id    = 1;
+      string user_id     = 2;
+      string email       = 3;
+      string first_name  = 4;
+      string last_name   = 5;
+      string role        = 6;
+      string occurred_at = 7;
     }
 
-  identity.addresses.created-value.json: |
-    {
-      "type": "record",
-      "name": "KratosVerifiableAddress",
-      "namespace": "io.mathtrail.debezium",
-      "fields": [
-        {"name": "id",          "type": "string",  "default": ""},
-        {"name": "identity_id", "type": "string",  "default": ""},
-        {"name": "status",      "type": "string",  "default": ""},
-        {"name": "via",         "type": "string",  "default": "email"},
-        {"name": "value",       "type": "string",  "default": ""},
-        {"name": "verified",    "type": "boolean", "default": false},
-        {"name": "__op",        "type": "string",  "default": ""},
-        {"name": "__ts_ms",     "type": "long",    "default": 0}
-      ]
+  # identity.v1.UserCreated
+  # Source: contracts/proto/identity/v1/events.proto
+  identity.v1.UserCreated.proto: |
+    syntax = "proto3";
+    package identity.v1;
+    option go_package = "github.com/mathtrail/contracts/gen/go/identity/v1;identityv1";
+    message UserCreated {
+      string event_id    = 1;
+      string identity_id = 2;
+      string schema_id   = 3;
+      string state       = 4;
+      string created_at  = 5;
+      string op          = 6;
+      string ts_ms       = 7;
     }
 
-  students.onboarding.ready-value.json: |
-    {
-      "type": "record",
-      "name": "StudentOnboardingReady",
-      "namespace": "io.mathtrail.students",
-      "fields": [
-        {"name": "event_id",    "type": "string", "default": ""},
-        {"name": "user_id",     "type": "string", "default": ""},
-        {"name": "email",       "type": "string", "default": ""},
-        {"name": "first_name",  "type": "string", "default": ""},
-        {"name": "last_name",   "type": "string", "default": ""},
-        {"name": "role",        "type": "string", "default": "parent"},
-        {"name": "occurred_at", "type": "string", "default": ""}
-      ]
+  # identity.v1.AddressCreated
+  # Source: contracts/proto/identity/v1/events.proto
+  identity.v1.AddressCreated.proto: |
+    syntax = "proto3";
+    package identity.v1;
+    option go_package = "github.com/mathtrail/contracts/gen/go/identity/v1;identityv1";
+    message AddressCreated {
+      string event_id    = 1;
+      string address_id  = 2;
+      string identity_id = 3;
+      string value       = 4;
+      string via         = 5;
+      string verified    = 6;
+      string created_at  = 7;
+      string op          = 8;
     }
 
 ---
@@ -89,40 +98,62 @@ spec:
               echo "Apicurio is ready."
       containers:
         - name: register-schemas
-          image: curlimages/curl:8.7.1
+          # Use alpine with curl + jq to safely build JSON body with escaping
+          image: alpine:3.20
           command:
             - sh
             - -c
             - |
               set -e
-              # Use Apicurio v2 API — schema sent as raw file body, no JSON escaping needed.
-              # X-Registry-IfExists: UPDATE — idempotent re-registration on every Helm upgrade.
-              # groupId=default maps to ccompat subjects used by Flink and Debezium converters.
-              REGISTRY="http://{{ .Release.Name }}-apicurio-registry:8080/apis/registry/v2/groups/default/artifacts"
+              apk add --no-cache curl jq
 
-              register_schema() {
+              # Apicurio Confluent compat v7 API endpoint.
+              # Using ccompat ensures RisingWave can resolve subjects by name without prefix.
+              REGISTRY_BASE="http://{{ .Release.Name }}-apicurio-registry:8080/apis/ccompat/v7"
+
+              # register_proto_schema: registers (or updates) a Protobuf schema.
+              # $1 = Confluent subject name (must match what RisingWave uses in ENCODE PROTOBUF)
+              # $2 = path to .proto file
+              register_proto_schema() {
                 local subject="$1"
-                local schema_file="$2"
+                local proto_file="$2"
+
                 echo "Registering subject: $subject"
+
+                # jq safely escapes the .proto file content as a JSON string
+                local body
+                body=$(jq -n --rawfile schema "$proto_file" '{"schemaType": "PROTOBUF", "schema": $schema}')
+
                 response=$(curl -sf -X POST \
-                  -H "Content-Type: application/json" \
-                  -H "X-Registry-ArtifactId: ${subject}" \
-                  -H "X-Registry-ArtifactType: AVRO" \
-                  -H "X-Registry-IfExists: UPDATE" \
-                  --data-binary "@${schema_file}" \
-                  "${REGISTRY}")
-                echo "  -> $response"
+                  -H "Content-Type: application/vnd.schemaregistry.v1+json" \
+                  --data "$body" \
+                  "${REGISTRY_BASE}/subjects/${subject}/versions" \
+                  || echo "FAILED")
+
+                if echo "$response" | grep -q "FAILED"; then
+                  echo "  ERROR registering $subject" >&2
+                  exit 1
+                fi
+                echo "  -> id=$(echo "$response" | jq -r '.id // "unknown"')"
               }
 
-              register_schema "identity.users.created-value"     /schemas/identity.users.created-value.json
-              register_schema "identity.addresses.created-value" /schemas/identity.addresses.created-value.json
-              register_schema "students.onboarding.ready-value"  /schemas/students.onboarding.ready-value.json
+              register_proto_schema \
+                "students.v1.StudentOnboardingReady" \
+                "/schemas/students.v1.StudentOnboardingReady.proto"
 
-              echo "All schemas registered successfully."
+              register_proto_schema \
+                "identity.v1.UserCreated" \
+                "/schemas/identity.v1.UserCreated.proto"
+
+              register_proto_schema \
+                "identity.v1.AddressCreated" \
+                "/schemas/identity.v1.AddressCreated.proto"
+
+              echo "All Protobuf schemas registered successfully."
           volumeMounts:
             - name: schemas
               mountPath: /schemas
       volumes:
         - name: schemas
           configMap:
-            name: avro-schemas
+            name: proto-schemas

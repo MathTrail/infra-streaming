@@ -1,0 +1,12 @@
+minio:
+  minio:
+    auth:
+      rootUser: ""
+      rootPassword: ""
+      existingSecret: "minio-root-creds"
+
+    persistence:
+      enabled: true
+      size: 20Gi
+
+    defaultBuckets: "automq-data,risingwave-data"

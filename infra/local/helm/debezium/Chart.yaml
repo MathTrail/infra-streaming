@@ -1,5 +1,0 @@
-apiVersion: v2
-name: debezium
-description: Debezium CDC connector for MathTrail — KafkaConnect + KafkaConnector + replication user setup
-version: 0.1.0
-# No upstream Helm chart dependency — Strimzi KafkaConnect/KafkaConnector are CRDs managed by Strimzi operator

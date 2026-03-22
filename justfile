@@ -3,31 +3,22 @@
 
 set shell := ["bash", "-c"]
 
-# Add required Helm repositories and build infrastructure images
-setup:
-    helm repo add mathtrail https://MathTrail.github.io/charts/charts
-    helm repo update
-    cd flink-jobs/sql-runner && buildah --storage-driver=vfs bud --log-level=error \
-        --tag k3d-mathtrail-registry.localhost:5050/flink-sql-runner:1.20 .
-    buildah --storage-driver=vfs push --log-level=error --tls-verify=false \
-        k3d-mathtrail-registry.localhost:5050/flink-sql-runner:1.20
-
 # Update Chart.lock for all Helm charts (run after adding/changing charts)
 dep-update:
-    helm dependency update infra/local/helm/kafka
+    helm dependency update infra/local/helm/minio
+    helm dependency update infra/local/helm/automq
     helm dependency update infra/local/helm/apicurio
-    helm dependency update infra/local/helm/seaweedfs
-    helm dependency update infra/local/helm/debezium
-    helm dependency update infra/local/helm/flink
+    helm dependency update infra/local/helm/risingwave
     helm dependency update infra/local/helm/kafka-ui
+    helm dependency update infra/local/helm/eventcatalog
 
 # Deploy all streaming components via ArgoCD in wave order
-deploy: setup
+deploy:
     #!/usr/bin/env bash
     set -euo pipefail
     BRANCH=$(git rev-parse --abbrev-ref HEAD)
-    for app in kafka apicurio seaweedfs debezium flink kafka-ui; do
-        helm upgrade --install mathtrail-$app infra/apps/$app \
+    for app in minio automq apicurio risingwave kafka-ui eventcatalog; do
+        helm upgrade --install streaming-$app infra/apps/$app \
             --namespace argocd --create-namespace \
             --set gitBranch="$BRANCH"
     done
@@ -36,13 +27,13 @@ deploy: setup
 delete:
     #!/usr/bin/env bash
     set -euo pipefail
-    for app in mathtrail-kafka mathtrail-apicurio mathtrail-seaweedfs \
-               mathtrail-debezium mathtrail-flink mathtrail-kafka-ui; do
+    for app in streaming-minio streaming-automq streaming-apicurio \
+               streaming-risingwave streaming-kafka-ui streaming-eventcatalog; do
         kubectl patch application "$app" -n argocd \
             --type=merge -p '{"metadata":{"finalizers":null}}' 2>/dev/null || true
     done
-    for app in kafka apicurio seaweedfs debezium flink kafka-ui; do
-        helm uninstall mathtrail-$app --namespace argocd --ignore-not-found 2>/dev/null || true
+    for app in minio automq apicurio risingwave kafka-ui eventcatalog; do
+        helm uninstall streaming-$app --namespace argocd --ignore-not-found 2>/dev/null || true
     done
     just _nuke-namespace streaming
 

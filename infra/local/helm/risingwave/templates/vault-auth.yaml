@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: risingwave-sa
+---
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultAuth
+metadata:
+  name: risingwave-vault-auth
+spec:
+  method: kubernetes
+  mount: kubernetes
+  kubernetes:
+    role: risingwave-role
+    serviceAccountName: risingwave-sa

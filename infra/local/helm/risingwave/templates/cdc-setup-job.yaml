@@ -1,0 +1,69 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: risingwave-cdc-setup
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  backoffLimit: 10
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: cdc-setup
+          image: bitnami/postgresql:16
+          env:
+            - name: PGHOST
+              value: {{ .Values.cdcSource.pgHost | quote }}
+            - name: PGPORT
+              value: {{ .Values.cdcSource.pgPort | quote }}
+            - name: PGDATABASE
+              value: {{ .Values.cdcSource.pgDatabase | quote }}
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: risingwave-pg-creds
+                  key: username
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: risingwave-pg-creds
+                  key: password
+          command:
+            - bash
+            - -c
+            - |
+              set -e
+
+              echo "Creating PostgreSQL publication for RisingWave CDC..."
+              psql -c "
+                DO \$\$
+                BEGIN
+                  CREATE PUBLICATION {{ .Values.cdcSource.publicationName }}
+                    FOR TABLE public.identities, public.identity_verifiable_addresses;
+                EXCEPTION
+                  WHEN duplicate_object THEN
+                    RAISE NOTICE 'Publication already exists, skipping.';
+                END
+                \$\$;
+              "
+
+              echo "Creating replication slot..."
+              psql -c "
+                SELECT CASE
+                  WHEN NOT EXISTS (
+                    SELECT 1 FROM pg_replication_slots
+                    WHERE slot_name = '{{ .Values.cdcSource.slotName }}'
+                  )
+                  THEN pg_create_logical_replication_slot(
+                    '{{ .Values.cdcSource.slotName }}', 'pgoutput'
+                  )
+                  ELSE NULL
+                END;
+              "
+
+              echo "CDC setup complete."
+              echo "  Publication : {{ .Values.cdcSource.publicationName }}"
+              echo "  Slot        : {{ .Values.cdcSource.slotName }}"
