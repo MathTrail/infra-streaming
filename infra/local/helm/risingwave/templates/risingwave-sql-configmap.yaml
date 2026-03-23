@@ -65,7 +65,17 @@ data:
         i.traits->>'first_name'         AS first_name,
         i.traits->>'last_name'          AS last_name,
         'student'                       AS role,
-        NOW()::VARCHAR                  AS occurred_at
+        NOW()::VARCHAR                  AS occurred_at,
+        -- CloudEvents Binary Mode headers (standard dash format per CE Kafka Binding spec)
+        -- RisingWave maps _headers MAP<VARCHAR, VARCHAR> to Kafka record headers automatically.
+        -- to_char used instead of NOW()::VARCHAR to produce RFC 3339 format (T and Z required).
+        MAP {
+            'ce-specversion': '1.0',
+            'ce-type':        'com.mathtrail.students.onboarding.ready',
+            'ce-source':      '/mathtrail/risingwave',
+            'ce-id':          gen_random_uuid()::VARCHAR,
+            'ce-time':        to_char(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
+        }                               AS _headers
     FROM identities i
     JOIN identity_verifiable_addresses iva
       ON iva.identity_id = i.id
@@ -81,11 +91,9 @@ data:
     --      After first message, check raw bytes in Kafka-UI.
     --      First byte must be 0x00 to confirm Confluent Wire Format.
     --
-    --    CLOUDEVENTS HEADERS (Variant A):
-    --      If RisingWave version supports HEADERS MAP column:
-    --      Add _headers MAP<VARCHAR, VARCHAR> column to MV above, then
-    --      RisingWave maps it to Kafka record headers automatically.
-    --      Otherwise use Variant B (CloudEvent Protobuf wrapper — see plan).
+    --    CLOUDEVENTS HEADERS: implemented via _headers MAP column in the MV above.
+    --      RisingWave maps _headers MAP<VARCHAR, VARCHAR> to Kafka record headers automatically.
+    --      Standard CloudEvents Kafka Binary Content Mode: ce-type, ce-id, ce-source, ce-time, ce-specversion.
     CREATE SINK IF NOT EXISTS students_onboarding_sink
     FROM students_onboarding_ready
     WITH (
