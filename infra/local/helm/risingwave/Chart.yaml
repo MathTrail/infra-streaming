@@ -2,7 +2,7 @@ apiVersion: v2
 name: risingwave-local
 description: RisingWave local wrapper for MathTrail streaming namespace
 type: application
-version: 0.1.0
+version: 0.2.0
 dependencies:
   - name: risingwave
     version: "*"
