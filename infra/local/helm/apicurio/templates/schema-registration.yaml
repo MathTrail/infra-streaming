@@ -1,11 +1,13 @@
 # Schema registration Job — runs after Apicurio is ready.
-# Registers 3 Protobuf schemas via Confluent compat v7 API.
+# Registers Protobuf schemas that are NOT yet owned by individual microservices.
+# Schemas consumed by a specific service should be registered in that service's Helm chart.
+# Remaining: identity.v1.* (until identity-api gets its own registration job)
 #
 # Registration endpoint: POST /apis/ccompat/v7/subjects/{subject}/versions
 # Using ccompat API (not v2 API) ensures subject names match exactly what
 # RisingWave uses when resolving schemas via FORMAT ENCODE PROTOBUF.
 #
-# Subject naming: {package}.{MessageName} — e.g. students.v1.StudentOnboardingReady
+# Subject naming: {package}.{MessageName} — e.g. identity.v1.UserCreated
 # This avoids the default-{artifactId} prefix that v2 API would produce.
 #
 # Schemas are self-contained (no import directives) — string types throughout,
@@ -18,22 +20,6 @@ kind: ConfigMap
 metadata:
   name: proto-schemas
 data:
-  # students.v1.StudentOnboardingReady
-  # Source: contracts/proto/students/v1/events.proto
-  students.v1.StudentOnboardingReady.proto: |
-    syntax = "proto3";
-    package students.v1;
-    option go_package = "github.com/mathtrail/contracts/gen/go/students/v1;studentsv1";
-    message StudentOnboardingReady {
-      string event_id    = 1;
-      string user_id     = 2;
-      string email       = 3;
-      string first_name  = 4;
-      string last_name   = 5;
-      string role        = 6;
-      string occurred_at = 7;
-    }
-
   # identity.v1.UserCreated
   # Source: contracts/proto/identity/v1/events.proto
   identity.v1.UserCreated.proto: |
@@ -136,10 +122,6 @@ spec:
                 fi
                 echo "  -> id=$(echo "$response" | jq -r '.id // "unknown"')"
               }
-
-              register_proto_schema \
-                "students.v1.StudentOnboardingReady" \
-                "/schemas/students.v1.StudentOnboardingReady.proto"
 
               register_proto_schema \
                 "identity.v1.UserCreated" \
