@@ -1,5 +1,5 @@
 {{- if .Values.deploy }}
-# RisingWave — unified CDC source (replaces Debezium) + stream processing (replaces Flink).
+# RisingWave — unified CDC source + stream processing.
 # wave 4: depends on MinIO (wave 1), AutoMQ (wave 2), Apicurio (wave 3), and PostgreSQL (external).
 apiVersion: argoproj.io/v1alpha1
 kind: Application

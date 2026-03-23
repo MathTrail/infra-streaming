@@ -8,7 +8,6 @@ data:
   setup.sql: |
     -- =======================================================================
     -- RisingWave CDC + Stream Processing Setup
-    -- Replaces: Debezium KafkaConnector + Flink SQL jobs
     -- =======================================================================
 
     -- 1. CDC Source — connects to Kratos PostgreSQL via native CDC
@@ -50,7 +49,6 @@ data:
     ) FROM kratos_pg_cdc TABLE 'public.identity_verifiable_addresses';
 
     -- 3. Materialized View — join CDC tables, produce StudentOnboardingReady event
-    --    Replaces Flink SQL transformation.
     --
     --    IMPORTANT: traits JSONB keys ('first_name', 'last_name') must match
     --    the Kratos identity schema configured in identity-api.

@@ -1,4 +1,5 @@
 apicurio-registry:
+  fullnameOverride: "apicurio"
   registry:
     # Apicurio 3.x: no per-storage-type image variants, persistence is mem by default
     image:

@@ -33,7 +33,6 @@ just delete
 | PostgreSQL       | Helm (`postgresql`)           | `mathtrail`        | `postgres-postgresql.mathtrail.svc:5432`     |
 | PgBouncer        | Raw manifests (kubectl)       | `mathtrail`        | `pgbouncer.mathtrail.svc:5432`               |
 | Redis            | Helm (`redis`)                | `mathtrail`        | `redis-master.mathtrail.svc:6379`            |
-| Kafka            | Strimzi Operator + CR         | `mathtrail`        | `kafka-kafka-bootstrap.mathtrail.svc:9092`   |
 | Vault            | Helm (`vault`)                | `vault`            | `vault.vault.svc:8200`                       |
 | External Secrets | Helm (`external-secrets`)     | `external-secrets` | Cluster-wide operator                        |
 | Telepresence     | Helm (`telepresence-oss`)     | `ambassador`       | Traffic Manager for local dev                |
@@ -44,7 +43,6 @@ just delete
 |------------|-------------|-------------|-------------|
 | PostgreSQL | `mathtrail` | `mathtrail` | `mathtrail` |
 | Redis      | —           | `mathtrail` | —           |
-| Kafka      | —           | —           | PLAINTEXT   |
 
 ## Configuration
 
@@ -52,14 +50,12 @@ just delete
 
 - [`postgresql-values.yaml`](values/postgresql-values.yaml) — standalone, 1Gi storage, nano resources
 - [`redis-values.yaml`](values/redis-values.yaml) — standalone, 1Gi storage, nano resources
-- [`strimzi-values.yaml`](values/strimzi-values.yaml) — Strimzi operator config
 - [`vault-values.yaml`](values/vault-values.yaml) — Vault server config
 - [`external-secrets-values.yaml`](values/external-secrets-values.yaml) — External Secrets operator config
 - [`telepresence-values.yaml`](values/telepresence-values.yaml) — Telepresence traffic manager config
 
 ### Raw manifests — [`manifests/`](manifests/)
 
-- [`kafka-cluster.yaml`](manifests/kafka-cluster.yaml) — single-node KRaft Kafka cluster CR, no TLS, 1Gi storage
 - [`pgbouncer.yaml`](manifests/pgbouncer.yaml) — PgBouncer connection pooler
 - [`pgbouncer-dashboard.yaml`](manifests/pgbouncer-dashboard.yaml) — PgBouncer dashboard
 - [`vault-init-job.yaml`](manifests/vault-init-job.yaml) — Job that configures Vault (Database Secrets Engine, K8s auth)

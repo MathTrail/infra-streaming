@@ -16,8 +16,7 @@ kafka-ui:
             # SASL credentials injected via K8s Secret (automq-kafka-ui-scram)
             sasl.jaas.config: "${KAFKA_UI_SASL_JAAS_CONFIG}"
           # Apicurio Schema Registry — Confluent compat API (Protobuf schemas)
-          schemaRegistry: http://streaming-apicurio-apicurio-registry:8080/apis/ccompat/v7
-          # kafkaConnect removed — Debezium Connect is no longer deployed
+          schemaRegistry: http://apicurio:8080/apis/ccompat/v7
 
   # Inject SASL credentials from K8s Secret
   extraEnvs:

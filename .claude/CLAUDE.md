@@ -3,7 +3,7 @@ You are working on mathtrail-infra-local — local development infrastructure fo
 This repo deploys PostgreSQL, Redis, and Kafka to the local k3d cluster for development.
 All services with databases depend on this repo being deployed first.
 
-Tech Stack: Helm, Just, Strimzi Operator (Kafka)
+Tech Stack: Helm, Just, AutoMQ (Kafka-compatible)
 Namespace: streaming
 
 # Communication Map
@@ -21,11 +21,11 @@ on the mentor, profile, and mathtrail databases.
 - Keep resource requests minimal (local dev — nano resources)
 - All Helm values in values/ directory
 - Document default credentials in README (acceptable for local dev only)
-- Kafka uses Strimzi operator with KRaft mode (no ZooKeeper)
+- AutoMQ provides Kafka-compatible API (SASL_PLAINTEXT, SCRAM-SHA-512)
 
 # Commit Convention
 Use Conventional Commits: feat(infra-local):, fix(infra-local):, chore(infra-local):
-Example: feat(infra-local): add kafka cluster via strimzi
+Example: feat(infra-streaming): add automq cluster
 
 # Testing Strategy
 Deploy: `just deploy`
