@@ -1,0 +1,16 @@
+# Traefik IngressRoute for Centrifugo WebSocket endpoint.
+# Path prefix /realtime is routed to the centrifugo-local service on port 8000.
+# Traefik forwards WebSocket Upgrade headers transparently — no extra middleware needed.
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: centrifugo
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: PathPrefix(`/realtime`)
+      kind: Rule
+      services:
+        - name: centrifugo-local
+          port: 8000

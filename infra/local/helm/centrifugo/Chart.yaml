@@ -1,0 +1,9 @@
+apiVersion: v2
+name: centrifugo-local
+description: Centrifugo real-time WebSocket server for MathTrail canvas feedback
+type: application
+version: 0.1.0
+dependencies:
+  - name: centrifugo
+    version: "*"
+    repository: "https://MathTrail.github.io/charts/charts"

@@ -1,0 +1,29 @@
+centrifugo:
+  # Sensitive values (token_hmac_secret_key, api_key) are injected via VSO Secret.
+  # Centrifugo reads CENTRIFUGO_TOKEN_HMAC_SECRET_KEY and CENTRIFUGO_API_KEY env vars
+  # from the centrifugo-secrets K8s Secret created by VaultStaticSecret below.
+  extraEnvFrom:
+    - secretRef:
+        name: centrifugo-secrets
+
+  config:
+    # Canvas namespace: protected channels require a per-subscription JWT token.
+    # canvas-api generates both the connection token and the channel token.
+    namespaces:
+      - name: canvas
+        subscribe_to_publish: true
+        protected: true
+    allowed_origins:
+      - "*"
+
+  service:
+    type: ClusterIP
+    port: 8000
+
+  resources:
+    requests:
+      memory: 64Mi
+      cpu: 50m
+    limits:
+      memory: 128Mi
+      cpu: 200m

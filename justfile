@@ -11,13 +11,14 @@ dep-update:
     helm dependency update infra/local/helm/risingwave
     helm dependency update infra/local/helm/kafka-ui
     helm dependency update infra/local/helm/eventcatalog
+    helm dependency update infra/local/helm/centrifugo
 
 # Deploy all streaming components via ArgoCD in wave order
 deploy:
     #!/usr/bin/env bash
     set -euo pipefail
     BRANCH=$(git rev-parse --abbrev-ref HEAD)
-    for app in minio automq apicurio risingwave kafka-ui eventcatalog; do
+    for app in minio automq apicurio risingwave kafka-ui eventcatalog centrifugo; do
         helm upgrade --install streaming-$app infra/apps/$app \
             --namespace argocd --create-namespace \
             --set gitBranch="$BRANCH"
@@ -28,11 +29,12 @@ delete:
     #!/usr/bin/env bash
     set -euo pipefail
     for app in streaming-minio streaming-automq streaming-apicurio \
-               streaming-risingwave streaming-kafka-ui streaming-eventcatalog; do
+               streaming-risingwave streaming-kafka-ui streaming-eventcatalog \
+               streaming-centrifugo; do
         kubectl patch application "$app" -n argocd \
             --type=merge -p '{"metadata":{"finalizers":null}}' 2>/dev/null || true
     done
-    for app in minio automq apicurio risingwave kafka-ui eventcatalog; do
+    for app in minio automq apicurio risingwave kafka-ui eventcatalog centrifugo; do
         helm uninstall streaming-$app --namespace argocd --ignore-not-found 2>/dev/null || true
     done
     just _nuke-namespace streaming
