@@ -1,17 +1,15 @@
-tags:
-  etcd: true
-
 risingwave:
   metaStore:
-    etcd:
+    sqlite:
       enabled: true
+      path: risingwave.db
+
   stateStore:
     s3:
       enabled: true
-      endpoint: "http://minio:9000"
+      endpoint: "http://streaming-minio:9000"
       bucket: "risingwave-data"
       region: "us-east-1"
-      credentials:
-        existingSecret: "risingwave-minio-creds"
-        accessKey: "access-key"
-        secretKey: "secret-key"
+      forcePathStyle: true
+      authentication:
+        existingSecretName: "risingwave-minio-creds"
