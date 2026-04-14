@@ -1,0 +1,7 @@
+minio:
+  rootUser: minioadmin
+  rootPassword: minioadmin
+
+risingwave:
+  accessKeyId: minioadmin
+  secretAccessKey: minioadmin

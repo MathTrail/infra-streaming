@@ -1,0 +1,5 @@
+apiVersion: v2
+name: local-secrets
+description: Local dev bootstrap secrets for streaming namespace (Vault substitute)
+type: application
+version: 0.1.0
