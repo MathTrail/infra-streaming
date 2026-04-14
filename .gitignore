@@ -30,3 +30,7 @@ Thumbs.db
 tmp/
 temp/
 *.tmp
+
+# Helm dependency downloads
+**/charts/
+**/Chart.lock
