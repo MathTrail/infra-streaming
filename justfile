@@ -23,6 +23,20 @@ deploy:
             --namespace argocd --create-namespace \
             --set gitBranch="$BRANCH"
     done
+    just _bootstrap-secrets
+
+# Create local dev secrets that are normally provisioned by Vault
+_bootstrap-secrets:
+    #!/usr/bin/env bash
+    kubectl create namespace streaming --dry-run=client -o yaml | kubectl apply -f - 2>/dev/null || true
+    kubectl create secret generic minio-root-creds -n streaming \
+        --from-literal=rootUser=minioadmin \
+        --from-literal=rootPassword=minioadmin \
+        --dry-run=client -o yaml | kubectl apply -f -
+    kubectl create secret generic risingwave-minio-creds -n streaming \
+        --from-literal=AWS_ACCESS_KEY_ID=minioadmin \
+        --from-literal=AWS_SECRET_ACCESS_KEY=minioadmin \
+        --dry-run=client -o yaml | kubectl apply -f -
 
 # Remove all streaming ArgoCD Applications and workload resources
 delete:
