@@ -1,4 +1,10 @@
+tags:
+  etcd: true
+
 risingwave:
+  metaStore:
+    etcd:
+      enabled: true
   stateStore:
     s3:
       enabled: true
