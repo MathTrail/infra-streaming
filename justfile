@@ -50,6 +50,8 @@ _nuke-namespace ns:
     kubectl delete namespace {{ ns }} --ignore-not-found --wait=false 2>/dev/null || true
     # Wait until all pods are terminated (operators are gone, can't re-add finalizers)
     kubectl wait pod --all -n {{ ns }} --for=delete --timeout=60s 2>/dev/null || true
+    # Force-delete any pods still stuck in Terminating
+    kubectl delete pod --all -n {{ ns }} --force --grace-period=0 2>/dev/null || true
     # Strip finalizers from all remaining resources — now safe, no operators running
     kubectl api-resources --verbs=list --namespaced -o name 2>/dev/null \
         | xargs -I{} kubectl get {} -n {{ ns }} --no-headers -o name 2>/dev/null \
