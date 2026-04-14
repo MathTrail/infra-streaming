@@ -1,12 +1,11 @@
 risingwave:
-  risingwave:
-    stateStore:
-      s3:
-        enabled: true
-        endpoint: "http://minio:9000"
-        bucket: "risingwave-data"
-        region: "us-east-1"
-        credentials:
-          existingSecret: "risingwave-minio-creds"
-          accessKey: "access-key"
-          secretKey: "secret-key"
+  stateStore:
+    s3:
+      enabled: true
+      endpoint: "http://minio:9000"
+      bucket: "risingwave-data"
+      region: "us-east-1"
+      credentials:
+        existingSecret: "risingwave-minio-creds"
+        accessKey: "access-key"
+        secretKey: "secret-key"
