@@ -7,4 +7,4 @@ spec:
   mount: kubernetes
   kubernetes:
     role: minio-role
-    serviceAccountName: default
+    serviceAccount: default
