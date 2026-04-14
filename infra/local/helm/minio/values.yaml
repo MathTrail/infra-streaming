@@ -1,23 +1,19 @@
 minio:
-  global:
-    security:
-      allowInsecureImages: true
+  mode: standalone
 
-  image:
-    registry: quay.io
-    repository: minio/minio
-    tag: RELEASE.2025-09-07T16-13-09Z
-
-  console:
-    enabled: false
-
-  auth:
-    rootUser: ""
-    rootPassword: ""
-    existingSecret: "minio-root-creds"
+  existingSecret: "minio-root-creds"
 
   persistence:
     enabled: true
     size: 20Gi
 
-  defaultBuckets: "automq-data,risingwave-data"
+  buckets:
+    - name: automq-data
+      policy: none
+    - name: risingwave-data
+      policy: none
+
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m

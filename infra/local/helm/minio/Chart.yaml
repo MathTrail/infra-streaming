@@ -2,8 +2,8 @@ apiVersion: v2
 name: minio-local
 description: MinIO local wrapper for MathTrail streaming namespace
 type: application
-version: 0.1.0
+version: 0.2.0
 dependencies:
   - name: minio
-    version: "*"
-    repository: "https://MathTrail.github.io/charts/charts"
+    version: "5.4.0"
+    repository: "https://charts.min.io/"
