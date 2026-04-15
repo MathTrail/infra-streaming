@@ -1,4 +1,8 @@
 risingwave:
+  fullnameOverride: "risingwave-frontend"
+  service:
+    port: 4566
+
   metaStore:
     sqlite:
       enabled: true

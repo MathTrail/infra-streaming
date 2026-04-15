@@ -31,7 +31,8 @@ kafka:
   # SASL/SCRAM-SHA-512
   sasl:
     enabledMechanisms: SCRAM-SHA-512
-    interbrokerMechanism: SCRAM-SHA-512
+    interBrokerMechanism: SCRAM-SHA-512
+    controllerMechanism: SCRAM-SHA-512
     # Users defined in Vault; provisioned via automq-risingwave-scram, automq-mentor-api-scram, automq-kafka-ui-scram secrets
 
   listeners:
