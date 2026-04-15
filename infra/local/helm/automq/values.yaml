@@ -1,5 +1,8 @@
 kafka:
   # AutoMQ image override — Bitnami Kafka chart with AutoMQ binary
+  # AutoMQ 1.6.x is based on Kafka 3.7.x — use kraftVersion: 0 (static quorum)
+  # to avoid Kafka 4.0 format incompatibilities in Bitnami chart 32.x
+  kraftVersion: 0
   global:
     security:
       allowInsecureImages: true
