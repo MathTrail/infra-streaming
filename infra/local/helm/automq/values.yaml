@@ -25,11 +25,15 @@ kafka:
           key: secret-key
 
   # SASL/SCRAM-SHA-512
+  # Fixed passwords prevent ArgoCD from regenerating them on each Helm sync,
+  # which would invalidate SCRAM hashes stored in KRaft metadata on PVCs.
+  # Client user passwords are managed separately via VSO secrets.
   sasl:
     enabledMechanisms: SCRAM-SHA-512
     interBrokerMechanism: SCRAM-SHA-512
     controllerMechanism: SCRAM-SHA-512
-    # Users defined in Vault; provisioned via automq-risingwave-scram, automq-mentor-api-scram, automq-kafka-ui-scram secrets
+    interBrokerPassword: "automq-interbroker-local"
+    controllerPassword: "automq-controller-local"
 
   listeners:
     client:
