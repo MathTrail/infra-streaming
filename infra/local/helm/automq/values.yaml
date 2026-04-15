@@ -47,6 +47,7 @@ kafka:
       s3.data.buckets=0@s3://automq-data?region=us-east-1&endpoint=http://streaming-minio:9000&pathStyleAccessEnabled=true
       s3.ops.buckets=0@s3://automq-data?region=us-east-1&endpoint=http://streaming-minio:9000&pathStyleAccessEnabled=true
       s3.wal.path=0@s3://automq-data?region=us-east-1&endpoint=http://streaming-minio:9000&pathStyleAccessEnabled=true
+      s3.path.style=true
     resources:
       requests:
         memory: 1Gi
