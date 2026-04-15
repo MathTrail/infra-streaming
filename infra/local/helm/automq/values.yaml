@@ -32,8 +32,10 @@ kafka:
     enabledMechanisms: SCRAM-SHA-512
     interBrokerMechanism: SCRAM-SHA-512
     controllerMechanism: SCRAM-SHA-512
-    interBrokerPassword: "automq-interbroker-local"
-    controllerPassword: "automq-controller-local"
+    interbroker:
+      password: "automq-interbroker-local"
+    controller:
+      password: "automq-controller-local"
 
   listeners:
     client:
