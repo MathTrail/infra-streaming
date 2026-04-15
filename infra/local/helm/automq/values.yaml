@@ -24,24 +24,16 @@ kafka:
           name: automq-s3-creds
           key: secret-key
 
-  # SASL/SCRAM-SHA-512
-  # Fixed passwords prevent ArgoCD from regenerating them on each Helm sync,
-  # which would invalidate SCRAM hashes stored in KRaft metadata on PVCs.
-  # Client user passwords are managed separately via VSO secrets.
-  sasl:
-    enabledMechanisms: SCRAM-SHA-512
-    interBrokerMechanism: SCRAM-SHA-512
-    controllerMechanism: SCRAM-SHA-512
-    interbroker:
-      password: "automq-interbroker-local"
-    controller:
-      password: "automq-controller-local"
-
+  # Local dev: PLAINTEXT only — no SASL.
+  # AutoMQ's KRaft bootstrap deadlocks with SCRAM-SHA-512: the MetadataLoader
+  # (which populates the SCRAM credential store) needs the raft quorum to form,
+  # but forming quorum requires SASL auth, which requires the credential store.
+  # PLAINTEXT sidesteps this entirely; security is irrelevant in local k3d.
   listeners:
     client:
-      protocol: SASL_PLAINTEXT
+      protocol: PLAINTEXT
     interbroker:
-      protocol: SASL_PLAINTEXT
+      protocol: PLAINTEXT
 
   controller:
     # AutoMQ S3 config — AutoMQ 1.6.x uses s3.*.buckets URI format, not automq.s3.*
