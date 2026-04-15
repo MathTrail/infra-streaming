@@ -6,7 +6,16 @@ risingwave:
   metaStore:
     sqlite:
       enabled: true
-      path: risingwave.db
+      path: /var/risingwave/meta/risingwave.db
+
+  metaComponent:
+    extraVolumes:
+      - name: meta-sqlite
+        persistentVolumeClaim:
+          claimName: risingwave-meta-sqlite
+    extraVolumeMounts:
+      - name: meta-sqlite
+        mountPath: /var/risingwave/meta
 
   stateStore:
     s3:
