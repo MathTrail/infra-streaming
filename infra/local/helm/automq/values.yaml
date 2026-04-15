@@ -3,6 +3,10 @@ kafka:
   # AutoMQ 1.6.x is based on Kafka 3.7.x — use kraftVersion: 0 (static quorum)
   # to avoid Kafka 4.0 format incompatibilities in Bitnami chart 32.x
   kraftVersion: 0
+  # Fixed cluster ID — prevents ArgoCD from regenerating it on every sync.
+  # ArgoCD disables Helm lookup(), so without this the chart generates a new
+  # random ID each sync, which breaks KRaft metadata log continuity.
+  clusterId: "MathTrailLocalDev00001"
   global:
     security:
       allowInsecureImages: true
