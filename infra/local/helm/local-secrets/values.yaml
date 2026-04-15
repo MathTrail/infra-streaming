@@ -1,7 +1,1 @@
-minio:
-  rootUser: minioadmin
-  rootPassword: minioadmin
-
-risingwave:
-  accessKeyId: minioadmin
-  secretAccessKey: minioadmin
+# Credentials for local-secrets are now managed by VaultStaticSecrets in their respective Helm charts
