@@ -41,6 +41,16 @@ kafka:
     interbroker:
       protocol: SASL_PLAINTEXT
 
+  controller:
+    resources:
+      requests:
+        memory: 1Gi
+        cpu: 250m
+      limits:
+        memory: 1.5Gi
+        cpu: 1000m
+    heapOpts: "-Xms512m -Xmx768m"
+
   persistence:
     enabled: true
     size: 20Gi
