@@ -1,0 +1,140 @@
+# Vault seed Job: writes local-dev credentials to Vault KV before streaming services start.
+# Runs as a Helm pre-install,pre-upgrade hook (weight: -5).
+# ArgoCD converts this to a PreSync hook, so it runs before any streaming resource is applied.
+#
+# All credentials are intentionally weak local-dev defaults (minioadmin/minioadmin etc.).
+# Do NOT use these values in staging or production.
+#
+# Centrifugo signing keys are generated once and never overwritten:
+# the Job uses `vault kv get` to check existence before writing.
+#
+# Cross-namespace token access: secretKeyRef does not work across namespaces.
+# init-container (bitnami/kubectl) reads vault-init-credentials from namespace `vault`
+# via ClusterRole and writes the token to an emptyDir shared with the main container.
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vault-seed-streaming
+  namespace: streaming
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: vault-seed-streaming
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: ["vault-init-credentials"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: vault-seed-streaming
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation
+subjects:
+  - kind: ServiceAccount
+    name: vault-seed-streaming
+    namespace: streaming
+roleRef:
+  kind: ClusterRole
+  name: vault-seed-streaming
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: vault-seed-streaming
+  namespace: streaming
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      serviceAccountName: vault-seed-streaming
+      restartPolicy: OnFailure
+      initContainers:
+        - name: fetch-vault-token
+          image: bitnami/kubectl:latest
+          command:
+            - sh
+            - -c
+            - |
+              kubectl get secret vault-init-credentials -n vault \
+                -o jsonpath='{.data.root-token}' | base64 -d > /vault-token/token
+              echo "Vault token fetched."
+          volumeMounts:
+            - name: vault-token
+              mountPath: /vault-token
+      containers:
+        - name: vault-seed
+          image: hashicorp/vault:1.19.0
+          env:
+            - name: VAULT_ADDR
+              value: http://vault.vault.svc.cluster.local:8200
+          command:
+            - sh
+            - -c
+            - |
+              export VAULT_TOKEN=$(cat /vault-token/token)
+
+              # MinIO root credentials.
+              # rootUser/rootPassword — Bitnami MinIO chart reads these via existingSecret.
+              vault kv put secret/local/streaming-minio-root \
+                rootUser=minioadmin rootPassword=minioadmin
+
+              # AutoMQ → MinIO (S3) credentials.
+              # access-key/secret-key → AUTOMQ_S3_ACCESS_KEY/AUTOMQ_S3_SECRET_KEY env vars.
+              vault kv put secret/local/streaming-minio-automq \
+                access-key=minioadmin secret-key=minioadmin
+
+              # RisingWave → MinIO (S3) credentials.
+              # Loaded via envFrom.secretRef; OpenDAL requires AWS_ env var names.
+              vault kv put secret/local/streaming-minio-risingwave \
+                AWS_ACCESS_KEY_ID=minioadmin AWS_SECRET_ACCESS_KEY=minioadmin
+
+              # RisingWave PostgreSQL CDC source credentials (placeholder for local dev).
+              vault kv put secret/local/streaming-risingwave-pg-creds \
+                username=risingwave password=risingwave-pg-local
+
+              # SCRAM credentials for AutoMQ consumers/producers.
+              vault kv put secret/local/streaming-automq-risingwave \
+                username=risingwave password=risingwave-scram-local
+              vault kv put secret/local/streaming-automq-mentor-api \
+                username=mentor-api password=mentor-api-scram-local
+              vault kv put secret/local/streaming-automq-kafka-ui \
+                username=kafka-ui password=kafka-ui-scram-local
+
+              # Centrifugo signing keys — generated once, never overwritten.
+              # On subsequent syncs the Job checks for existence and skips if present.
+              if vault kv get secret/centrifugo/secrets > /dev/null 2>&1; then
+                echo "secret/centrifugo/secrets already exists, skipping."
+              else
+                HMAC_KEY=$(vault write -field=random_bytes sys/tools/random/32 format=hex)
+                API_KEY=$(vault write -field=random_bytes sys/tools/random/32 format=hex)
+                vault kv put secret/centrifugo/secrets \
+                  token_hmac_secret_key="$HMAC_KEY" api_key="$API_KEY"
+              fi
+
+              echo "Vault seeding complete."
+          volumeMounts:
+            - name: vault-token
+              mountPath: /vault-token
+      volumes:
+        - name: vault-token
+          emptyDir: {}
