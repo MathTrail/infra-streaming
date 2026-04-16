@@ -1,6 +1,6 @@
 image:
   repository: k3d-mathtrail-registry.localhost:5050/eventcatalog
-  tag: latest
+  tag: local
   pullPolicy: Always
 
 basePath: /observability/eventcatalog
