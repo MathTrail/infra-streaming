@@ -6,17 +6,11 @@ apicurio-registry:
       tag: "3.2.0"
       persistenceSuffix: false
 
-    # Serve the registry UI and API at /observability/apicurio so Oathkeeper
-    # can proxy it at https://mathtrail.localhost/observability/apicurio without path stripping.
-    extraEnv:
-      - name: QUARKUS_HTTP_ROOT_PATH
-        value: /observability/apicurio
-
-    # Probes hit the pod directly — must include the Quarkus root path prefix.
+    # /health/* paths don't exist in Apicurio 3.x — only registry API responds
     livenessProbe:
-      path: /observability/apicurio/apis/registry/v3/system/info
+      path: /apis/registry/v3/system/info
     readinessProbe:
-      path: /observability/apicurio/apis/registry/v3/system/info
+      path: /apis/registry/v3/system/info
 
     resources:
       requests:
