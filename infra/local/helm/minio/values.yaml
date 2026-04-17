@@ -3,6 +3,11 @@ minio:
 
   existingSecret: "minio-root-creds"
 
+  # Serve the MinIO Console UI at /observability/minio so Oathkeeper can proxy it
+  # at https://mathtrail.localhost/observability/minio without path stripping.
+  environment:
+    CONSOLE_SUBPATH: "/observability/minio"
+
   persistence:
     enabled: true
     size: 20Gi

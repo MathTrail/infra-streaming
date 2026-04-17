@@ -60,3 +60,32 @@ just delete
 - [`pgbouncer-dashboard.yaml`](manifests/pgbouncer-dashboard.yaml) — PgBouncer dashboard
 - [`vault-init-job.yaml`](manifests/vault-init-job.yaml) — Job that configures Vault (Database Secrets Engine, K8s auth)
 - [`cluster-secret-store.yaml`](manifests/cluster-secret-store.yaml) — ClusterSecretStore for External Secrets
+
+## Streaming Services
+
+Streaming infrastructure deployed to the `streaming` namespace via ArgoCD.
+
+| Service | K8s Service | Namespace | Port |
+|---------|-------------|-----------|------|
+| AutoMQ (Kafka-compatible) | `streaming-automq-kafka` | `streaming` | 9092 |
+| Apicurio Schema Registry | `streaming-apicurio-apicurio-registry` | `streaming` | 8080 |
+| Kafka UI | `streaming-kafka-ui` | `streaming` | 8080 |
+| EventCatalog | `streaming-eventcatalog-eventcatalog-local` | `streaming` | 8080 |
+| MinIO API | `streaming-minio` | `streaming` | 9000 |
+| MinIO Console | `streaming-minio-console` | `streaming` | 9001 |
+| RisingWave | `risingwave-frontend` | `streaming` | 4566 |
+| Centrifugo | `streaming-centrifugo` | `streaming` | 8000 |
+
+## Accessing UIs
+
+All web UIs are exposed through the identity gateway at `https://mathtrail.localhost`.
+Authentication (cookie session) and authorization (`Monitoring:ui#viewer` Keto relation) are enforced by Oathkeeper.
+
+| UI | URL | Notes |
+|----|-----|-------|
+| Kafka UI | https://mathtrail.localhost/observability/kafka-ui/ | AutoMQ cluster + Apicurio schema registry |
+| Apicurio Registry | https://mathtrail.localhost/observability/apicurio/ | Schema management (Avro, Protobuf, JSON Schema) |
+| EventCatalog | https://mathtrail.localhost/observability/eventcatalog/ | EDA event/service documentation |
+| MinIO Console | https://mathtrail.localhost/observability/minio/ | S3 bucket management (automq-data, risingwave-data) |
+
+> To grant access, add a Keto relation tuple: `Monitoring:ui#viewer@<user-id>`
