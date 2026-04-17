@@ -2,7 +2,10 @@ kafka-ui:
   envs:
     config:
       SERVER_SERVLET_CONTEXT_PATH: /observability/kafka-ui
-      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=50.0 -XX:MaxMetaspaceSize=150m -XX:+UseContainerSupport"
+      # Fixed heap bounds: predictable memory, avoids OOMKill.
+      # MaxRAMPercentage=50% of 1536Mi = 768Mi heap which combined with
+      # code cache + metaspace + Kafka direct buffers exceeds the limit.
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m -XX:MaxMetaspaceSize=192m -XX:+UseContainerSupport"
   yamlApplicationConfig:
     kafka:
       clusters:
@@ -19,10 +22,10 @@ kafka-ui:
 
   resources:
     requests:
-      memory: 512Mi
+      memory: 256Mi
       cpu: 100m
     limits:
-      memory: 1536Mi
+      memory: 768Mi
       cpu: 500m
 
   service:
