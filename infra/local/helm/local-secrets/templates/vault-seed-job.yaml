@@ -118,7 +118,8 @@ spec:
               vault kv put secret/local/streaming-automq-mentor-api \
                 username=mentor-api password=mentor-api-scram-local
               vault kv put secret/local/streaming-automq-kafka-ui \
-                username=kafka-ui password=kafka-ui-scram-local
+                username=kafka-ui password=kafka-ui-scram-local \
+                jaas.config='org.apache.kafka.common.security.scram.ScramLoginModule required username="kafka-ui" password="kafka-ui-scram-local";'
 
               # Centrifugo signing keys — generated once, never overwritten.
               # On subsequent syncs the Job checks for existence and skips if present.

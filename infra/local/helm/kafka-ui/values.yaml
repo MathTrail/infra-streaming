@@ -3,6 +3,11 @@ kafka-ui:
     config:
       SERVER_SERVLET_CONTEXT_PATH: /observability/kafka-ui
       JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=50.0 -XX:MaxMetaspaceSize=150m -XX:+UseContainerSupport"
+    # Inject SASL credentials from K8s Secret (automq-kafka-ui-scram)
+    secretMappings:
+      KAFKA_UI_SASL_JAAS_CONFIG:
+        name: automq-kafka-ui-scram
+        keyName: jaas.config
 
   yamlApplicationConfig:
     kafka:
@@ -17,14 +22,6 @@ kafka-ui:
             sasl.jaas.config: "${KAFKA_UI_SASL_JAAS_CONFIG}"
           # Apicurio Schema Registry — Confluent compat API (Protobuf schemas)
           schemaRegistry: http://apicurio:8080/apis/ccompat/v7
-
-  # Inject SASL credentials from K8s Secret
-  extraEnvs:
-    - name: KAFKA_UI_SASL_JAAS_CONFIG
-      valueFrom:
-        secretKeyRef:
-          name: automq-kafka-ui-scram
-          key: jaas.config
 
   resources:
     requests:
