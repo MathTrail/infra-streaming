@@ -30,6 +30,16 @@ kafka:
           name: automq-s3-creds
           key: secret-key
 
+  # Pin controller SASL password to prevent quorum breaks.
+  # Without existingSecret, Bitnami regenerates controller-password on every
+  # ArgoCD sync. When only one controller pod restarts it picks up the new
+  # password while the others keep the old one → PLAIN auth fails → quorum breaks.
+  # With existingSecret, Bitnami reads the controller-password from the existing
+  # K8s secret and never overwrites it. On a fresh cluster the secret is created
+  # once with a random password and stays stable for all subsequent restarts.
+  sasl:
+    existingSecret: streaming-automq-kafka-user-passwords
+
   # Local dev: PLAINTEXT only — no SASL.
   # AutoMQ's KRaft bootstrap deadlocks with SCRAM-SHA-512: the MetadataLoader
   # (which populates the SCRAM credential store) needs the raft quorum to form,
