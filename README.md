@@ -86,6 +86,12 @@ Authentication (cookie session) and authorization (`Monitoring:ui#viewer` Keto r
 | Kafka UI | https://mathtrail.localhost/observability/kafka-ui/ | AutoMQ cluster + Apicurio schema registry |
 | Apicurio Registry | https://mathtrail.localhost/observability/apicurio/ | Schema management (Avro, Protobuf, JSON Schema) |
 | EventCatalog | https://mathtrail.localhost/observability/eventcatalog/ | EDA event/service documentation |
-| MinIO Console | https://mathtrail.localhost/observability/minio/ | S3 bucket management (automq-data, risingwave-data) |
+| MinIO Console | https://minio.mathtrail.localhost/ (redirects from /observability/minio) | S3 bucket management (automq-data, risingwave-data) |
 
 > To grant access, add a Keto relation tuple: `Monitoring:ui#viewer@<user-id>`
+
+### Default credentials (local dev only)
+
+| Service | Username | Password | Secret |
+|---------|----------|----------|--------|
+| MinIO Console | `minioadmin` | `minioadmin` | `streaming/minio-root-creds` (Vault KV) |

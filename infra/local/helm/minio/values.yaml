@@ -3,10 +3,9 @@ minio:
 
   existingSecret: "minio-root-creds"
 
-  # Serve the MinIO Console UI at /observability/minio so Oathkeeper can proxy it
-  # at https://mathtrail.localhost/observability/minio without path stripping.
-  environment:
-    CONSOLE_SUBPATH: "/observability/minio"
+  # MinIO Console is served at https://minio.mathtrail.localhost/ (own subdomain).
+  # CONSOLE_SUBPATH removed — subdomain approach avoids /api/v1 conflict with mentor-api.
+  environment: {}
 
   persistence:
     enabled: true
