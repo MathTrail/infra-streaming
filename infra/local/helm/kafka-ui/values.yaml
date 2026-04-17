@@ -3,12 +3,6 @@ kafka-ui:
     config:
       SERVER_SERVLET_CONTEXT_PATH: /observability/kafka-ui
       JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=50.0 -XX:MaxMetaspaceSize=150m -XX:+UseContainerSupport"
-    # Inject SASL credentials from K8s Secret (automq-kafka-ui-scram)
-    secretMappings:
-      KAFKA_UI_SASL_JAAS_CONFIG:
-        name: automq-kafka-ui-scram
-        keyName: jaas.config
-
   yamlApplicationConfig:
     kafka:
       clusters:
@@ -16,10 +10,10 @@ kafka-ui:
           # AutoMQ bootstrap server (Kafka-compatible API, SASL_PLAINTEXT)
           bootstrapServers: streaming-automq-kafka.streaming.svc.cluster.local:9092
           properties:
-            security.protocol: SASL_PLAINTEXT
-            sasl.mechanism: SCRAM-SHA-512
-            # SASL credentials injected via K8s Secret (automq-kafka-ui-scram)
-            sasl.jaas.config: "${KAFKA_UI_SASL_JAAS_CONFIG}"
+            # AutoMQ local dev uses PLAINTEXT only.
+            # SCRAM-SHA-512 deadlocks KRaft bootstrap (credential store needs quorum,
+            # quorum needs auth), so SASL is disabled entirely for local k3d.
+            security.protocol: PLAINTEXT
           # Apicurio Schema Registry — Confluent compat API (Protobuf schemas)
           schemaRegistry: http://streaming-apicurio-apicurio-registry.streaming.svc.cluster.local:8080/apis/ccompat/v7
 
