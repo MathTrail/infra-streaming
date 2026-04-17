@@ -14,14 +14,14 @@ kafka-ui:
       clusters:
         - name: local
           # AutoMQ bootstrap server (Kafka-compatible API, SASL_PLAINTEXT)
-          bootstrapServers: automq:9092
+          bootstrapServers: streaming-automq-kafka.streaming.svc.cluster.local:9092
           properties:
             security.protocol: SASL_PLAINTEXT
             sasl.mechanism: SCRAM-SHA-512
             # SASL credentials injected via K8s Secret (automq-kafka-ui-scram)
             sasl.jaas.config: "${KAFKA_UI_SASL_JAAS_CONFIG}"
           # Apicurio Schema Registry — Confluent compat API (Protobuf schemas)
-          schemaRegistry: http://apicurio:8080/apis/ccompat/v7
+          schemaRegistry: http://streaming-apicurio-apicurio-registry.streaming.svc.cluster.local:8080/apis/ccompat/v7
 
   resources:
     requests:
