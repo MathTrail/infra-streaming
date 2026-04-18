@@ -61,10 +61,12 @@ kafka:
       s3.wal.path=0@s3://automq-data?region=us-east-1&endpoint=http://streaming-minio:9000&pathStyle=true&authType=static
     resources:
       requests:
-        memory: 1Gi
+        memory: 1.5Gi
         cpu: 250m
       limits:
-        memory: 1.5Gi
+        # Increased from 1.5Gi: AutoMQ requires significant off-heap memory for
+        # S3 WAL/data buffers in addition to JVM heap. 1.5Gi caused OOMKill.
+        memory: 2.5Gi
         cpu: 1000m
     heapOpts: "-Xms512m -Xmx768m"
 
