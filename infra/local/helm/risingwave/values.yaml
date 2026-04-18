@@ -3,6 +3,12 @@ risingwave:
   service:
     port: 4566
 
+  # TEMPORARY: nightly image required for PostgreSQL 18 CDC support.
+  # PG18 fix merged to main 2026-02-11 (risingwavelabs/risingwave#24765), not yet in a stable release.
+  # Remove this override once RisingWave v2.9.0+ with PG18 CDC is published.
+  image:
+    tag: "nightly-20260410"
+
   metaStore:
     sqlite:
       enabled: true

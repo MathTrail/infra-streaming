@@ -76,6 +76,13 @@ Streaming infrastructure deployed to the `streaming` namespace via ArgoCD.
 | RisingWave | `risingwave-frontend` | `streaming` | 4566 |
 | Centrifugo | `streaming-centrifugo` | `streaming` | 8000 |
 
+> [!WARNING]
+> **RisingWave nightly override active.** `infra/local/helm/risingwave/values.yaml` pins
+> `image.tag: nightly-20260410` to enable PostgreSQL 18 CDC support
+> (fix merged 2026-02-11, [risingwavelabs/risingwave#24765](https://github.com/risingwavelabs/risingwave/pull/24765),
+> not yet in a stable release).
+> **Remove the `image.tag` override once RisingWave v2.9.0+ with PG18 CDC is released.**
+
 ## Accessing UIs
 
 All web UIs are exposed through the identity gateway at `https://mathtrail.localhost`.
