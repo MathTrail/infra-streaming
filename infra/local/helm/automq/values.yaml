@@ -70,7 +70,8 @@ kafka:
         # S3 WAL/data buffers in addition to JVM heap. 1.5Gi caused OOMKill.
         memory: 2.5Gi
         cpu: 1000m
-    heapOpts: "-Xms512m -Xmx768m"
+    # Increased from 768m: elasticstream.enable=true needs heap for WAL/S3 init.
+    heapOpts: "-Xms512m -Xmx1280m"
 
   persistence:
     enabled: true
