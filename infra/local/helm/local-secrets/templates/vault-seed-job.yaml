@@ -121,6 +121,11 @@ spec:
                 username=kafka-ui password=kafka-ui-scram-local \
                 jaas.config='org.apache.kafka.common.security.scram.ScramLoginModule required username="kafka-ui" password="kafka-ui-scram-local";'
 
+              # MinIO OIDC client secret for Hydra SSO.
+              # Fixed local-dev value — matches the client_secret registered in Hydra.
+              vault kv put secret/local/streaming-minio-oidc \
+                MINIO_IDENTITY_OPENID_CLIENT_SECRET=minio-oidc-local
+
               # Centrifugo signing keys — generated once, never overwritten.
               # On subsequent syncs the Job checks for existence and skips if present.
               if vault kv get secret/centrifugo/secrets > /dev/null 2>&1; then

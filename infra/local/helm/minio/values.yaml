@@ -5,7 +5,23 @@ minio:
 
   # MinIO Console is served at https://minio.mathtrail.localhost/ (own subdomain).
   # CONSOLE_SUBPATH removed — subdomain approach avoids /api/v1 conflict with mentor-api.
-  environment: {}
+  environment:
+    MINIO_IDENTITY_OPENID_CONFIG_URL: "http://hydra-public.identity.svc.cluster.local:4444/.well-known/openid-configuration"
+    MINIO_IDENTITY_OPENID_CLIENT_ID: "minio-console"
+    MINIO_IDENTITY_OPENID_CLAIM_NAME: "minio_policy"
+    MINIO_IDENTITY_OPENID_REDIRECT_URI_DYNAMIC: "on"
+    MINIO_IDENTITY_OPENID_DISPLAY_NAME: "MathTrail"
+    MINIO_IDENTITY_OPENID_SCOPES: "openid,profile,email"
+    MINIO_IDENTITY_OPENID_TLS_SKIP_VERIFY: "on"
+
+  extraEnv:
+    - name: MINIO_IDENTITY_OPENID_CLIENT_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: minio-oidc-creds
+          key: MINIO_IDENTITY_OPENID_CLIENT_SECRET
+
+  # minio-oidc-creds K8s Secret is synced from Vault by VaultStaticSecret (vault-static-secret-oidc.yaml)
 
   persistence:
     enabled: true
