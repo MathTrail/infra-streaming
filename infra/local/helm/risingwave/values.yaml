@@ -6,9 +6,9 @@ risingwave:
   # TEMPORARY: nightly image required for PostgreSQL 18 CDC support.
   # PG18 fix merged to main 2026-02-11 (risingwavelabs/risingwave#24765), not yet in a stable release.
   # Remove this override once RisingWave v2.9.0+ with PG18 CDC is published.
-  # repository overridden to Docker Hub: docker.risingwave.com proxies via GHCR/Azure CDN which hangs in this network.
+  # registry overridden to Docker Hub: docker.risingwave.com proxies via GHCR/Azure CDN which hangs in this network.
   image:
-    repository: "risingwavelabs/risingwave"
+    registry: "registry-1.docker.io"
     tag: "nightly-20260410"
 
   metaStore:
