@@ -5,23 +5,25 @@ minio:
 
   # MinIO Console is served at https://minio.mathtrail.localhost/ (own subdomain).
   # CONSOLE_SUBPATH removed — subdomain approach avoids /api/v1 conflict with mentor-api.
-  environment:
-    MINIO_IDENTITY_OPENID_CONFIG_URL: "http://hydra-public.identity.svc.cluster.local:4444/.well-known/openid-configuration"
-    MINIO_IDENTITY_OPENID_CLIENT_ID: "minio-console"
-    MINIO_IDENTITY_OPENID_CLAIM_NAME: "minio_policy"
-    MINIO_IDENTITY_OPENID_REDIRECT_URI_DYNAMIC: "on"
-    MINIO_IDENTITY_OPENID_DISPLAY_NAME: "MathTrail"
-    MINIO_IDENTITY_OPENID_SCOPES: "openid,profile,email"
-    MINIO_IDENTITY_OPENID_TLS_SKIP_VERIFY: "on"
 
-  extraEnv:
-    - name: MINIO_IDENTITY_OPENID_CLIENT_SECRET
-      valueFrom:
-        secretKeyRef:
-          name: minio-oidc-creds
-          key: MINIO_IDENTITY_OPENID_CLIENT_SECRET
-
+  # Use the chart's native oidc: section so CLIENT_SECRET is loaded from a K8s Secret.
+  # minio chart v5.4.0 ignores extraEnv — extraEnv is not a supported field.
   # minio-oidc-creds K8s Secret is synced from Vault by VaultStaticSecret (vault-static-secret-oidc.yaml)
+  oidc:
+    enabled: true
+    configUrl: "http://hydra-public.identity.svc.cluster.local:4444/.well-known/openid-configuration"
+    clientId: "minio-console"
+    existingClientSecretName: "minio-oidc-creds"
+    existingClientSecretKey: "MINIO_IDENTITY_OPENID_CLIENT_SECRET"
+    claimName: "minio_policy"
+    scopes: "openid,profile,email"
+    redirectUri: "https://minio.mathtrail.localhost/oauth_callback"
+    displayName: "MathTrail"
+
+  # REDIRECT_URI_DYNAMIC is not in the chart's oidc template — set via environment:
+  # TLS_SKIP_VERIFY is not a valid MinIO env var; Hydra is served over HTTP so TLS is not needed.
+  environment:
+    MINIO_IDENTITY_OPENID_REDIRECT_URI_DYNAMIC: "on"
 
   persistence:
     enabled: true
