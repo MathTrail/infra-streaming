@@ -25,6 +25,9 @@ minio:
   environment:
     MINIO_IDENTITY_OPENID_REDIRECT_URI_DYNAMIC: "on"
 
+  # Trust the local dev CA so MinIO can verify the jwks_uri TLS cert (https://mathtrail.localhost)
+  trustedCertsSecret: "minio-trusted-ca"
+
   persistence:
     enabled: true
     size: 20Gi
