@@ -35,10 +35,6 @@ rules:
     resources: ["deployments"]
     resourceNames: ["streaming-minio"]
     verbs: ["get", "patch"]
-  - apiGroups: ["apps"]
-    resources: ["deployments/status"]
-    resourceNames: ["streaming-minio"]
-    verbs: ["get"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -110,7 +106,17 @@ spec:
               if [ "$STRATEGY" != "redirect" ]; then
                 echo "OIDC not initialized (strategy=$STRATEGY). Restarting MinIO deployment..."
                 kubectl rollout restart deployment/streaming-minio -n streaming
-                kubectl rollout status deployment/streaming-minio -n streaming --timeout=120s
+                echo "Waiting for MinIO to become ready..."
+                for i in $(seq 1 24); do
+                  READY=$(kubectl get deployment streaming-minio -n streaming -o jsonpath='{.status.readyReplicas}' 2>/dev/null || echo "0")
+                  DESIRED=$(kubectl get deployment streaming-minio -n streaming -o jsonpath='{.spec.replicas}' 2>/dev/null || echo "1")
+                  if [ "$READY" = "$DESIRED" ] && [ "$READY" != "0" ]; then
+                    echo "  MinIO is ready ($READY/$DESIRED)"
+                    break
+                  fi
+                  echo "  attempt $i/24: ready=$READY desired=$DESIRED, waiting 5s..."
+                  sleep 5
+                done
                 echo "MinIO restarted. Verifying OIDC..."
                 sleep 10
                 STRATEGY=$(curl -s "$MINIO_URL/api/v1/login" | grep -o '"loginStrategy":"[^"]*"' | cut -d'"' -f4)
