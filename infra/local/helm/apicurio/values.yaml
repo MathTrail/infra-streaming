@@ -1,7 +1,8 @@
 apicurio-registry:
   fullnameOverride: "apicurio"
   registry:
-    # Apicurio 3.x: no per-storage-type image variants, persistence is mem by default
+    # Apicurio 3.x: no per-storage-type image variants.
+    # KafkaSql persistence — schemas stored in AutoMQ (MinIO S3 backend) → survive pod restarts.
     image:
       tag: "3.2.0"
       persistenceSuffix: false
@@ -19,6 +20,15 @@ apicurio-registry:
       limits:
         memory: 512Mi
         cpu: 500m
+
+    # KafkaSql persistence for Apicurio 3.x.
+    # Schemas stored in AutoMQ (backed by MinIO S3) — survive pod restarts.
+    # Property names from apicurio.kafkasql.* namespace (not apicurio.storage.kafkasql.*).
+    extraEnv:
+      - name: APICURIO_STORAGE_KIND
+        value: kafkasql
+      - name: APICURIO_KAFKASQL_BOOTSTRAP_SERVERS
+        value: "streaming-automq-kafka.streaming.svc.cluster.local:9092"
 
   sync:
     # Schemas are registered via Job — sync CRD operator not needed
