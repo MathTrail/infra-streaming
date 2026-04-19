@@ -1,7 +1,8 @@
-# PostSync hook: after every deploy, verify MinIO OIDC is initialized.
-# If MinIO started before Hydra was ready, OIDC fails at startup and is never retried.
-# This Job detects that condition (loginStrategy == "form" instead of "redirect")
-# and rolls out a restart so MinIO re-initializes OIDC against a now-live Hydra.
+# CronJob watchdog: every minute, verify MinIO OIDC is initialized.
+# If Hydra is unreachable (identity not deployed), silently skips — infra-streaming
+# deploys independently. If Hydra is up but MinIO OIDC failed at startup (race
+# condition: MinIO started before Hydra was ready), restarts the deployment so
+# MinIO re-initializes its OIDC provider. Eventual consistency, not a sync barrier.
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -13,9 +14,6 @@ metadata:
   annotations:
     meta.helm.sh/release-name: {{ .Release.Name }}
     meta.helm.sh/release-namespace: {{ .Release.Namespace }}
-    "helm.sh/hook": post-install,post-upgrade
-    "helm.sh/hook-weight": "10"
-    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -27,9 +25,6 @@ metadata:
   annotations:
     meta.helm.sh/release-name: {{ .Release.Name }}
     meta.helm.sh/release-namespace: {{ .Release.Namespace }}
-    "helm.sh/hook": post-install,post-upgrade
-    "helm.sh/hook-weight": "10"
-    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 rules:
   - apiGroups: ["apps"]
     resources: ["deployments"]
@@ -46,9 +41,6 @@ metadata:
   annotations:
     meta.helm.sh/release-name: {{ .Release.Name }}
     meta.helm.sh/release-namespace: {{ .Release.Namespace }}
-    "helm.sh/hook": post-install,post-upgrade
-    "helm.sh/hook-weight": "10"
-    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 subjects:
   - kind: ServiceAccount
     name: minio-oidc-check
@@ -59,7 +51,7 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ---
 apiVersion: batch/v1
-kind: Job
+kind: CronJob
 metadata:
   name: minio-oidc-check
   namespace: streaming
@@ -68,59 +60,64 @@ metadata:
   annotations:
     meta.helm.sh/release-name: {{ .Release.Name }}
     meta.helm.sh/release-namespace: {{ .Release.Namespace }}
-    "helm.sh/hook": post-install,post-upgrade
-    "helm.sh/hook-weight": "20"
-    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
-  ttlSecondsAfterFinished: 300
-  template:
+  schedule: "* * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
     spec:
-      serviceAccountName: minio-oidc-check
-      restartPolicy: OnFailure
-      containers:
-        - name: check
-          image: bitnami/kubectl:latest
-          command:
-            - sh
-            - -c
-            - |
-              set -e
-              HYDRA_URL="http://hydra-public.identity.svc.cluster.local:4444/.well-known/openid-configuration"
-              MINIO_URL="http://streaming-minio-console.streaming.svc.cluster.local:9001"
+      ttlSecondsAfterFinished: 120
+      template:
+        spec:
+          serviceAccountName: minio-oidc-check
+          restartPolicy: Never
+          containers:
+            - name: check
+              image: alpine/k8s:1.31.4
+              command:
+                - sh
+                - -c
+                - |
+                  HYDRA_URL="http://hydra-public.identity.svc.cluster.local:4444/.well-known/openid-configuration"
+                  MINIO_URL="http://streaming-minio-console.streaming.svc.cluster.local:9001"
 
-              echo "Waiting for Hydra OIDC endpoint..."
-              for i in $(seq 1 60); do
-                STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$HYDRA_URL" 2>/dev/null || echo "000")
-                if [ "$STATUS" = "200" ]; then
-                  echo "Hydra is ready."
-                  break
-                fi
-                echo "  attempt $i/60: Hydra returned $STATUS, retrying in 5s..."
-                sleep 5
-              done
-
-              echo "Checking MinIO OIDC initialization..."
-              STRATEGY=$(curl -s "$MINIO_URL/api/v1/login" | grep -o '"loginStrategy":"[^"]*"' | cut -d'"' -f4)
-              echo "  MinIO loginStrategy: $STRATEGY"
-
-              if [ "$STRATEGY" != "redirect" ]; then
-                echo "OIDC not initialized (strategy=$STRATEGY). Restarting MinIO deployment..."
-                kubectl rollout restart deployment/streaming-minio -n streaming
-                echo "Waiting for MinIO to become ready..."
-                for i in $(seq 1 24); do
-                  READY=$(kubectl get deployment streaming-minio -n streaming -o jsonpath='{.status.readyReplicas}' 2>/dev/null || echo "0")
-                  DESIRED=$(kubectl get deployment streaming-minio -n streaming -o jsonpath='{.spec.replicas}' 2>/dev/null || echo "1")
-                  if [ "$READY" = "$DESIRED" ] && [ "$READY" != "0" ]; then
-                    echo "  MinIO is ready ($READY/$DESIRED)"
-                    break
+                  # Probe Hydra with a strict timeout — if unreachable, identity is not
+                  # deployed yet or is restarting. Skip silently so infra-streaming
+                  # deploys stay independent.
+                  if ! curl -sSf --connect-timeout 3 "$HYDRA_URL" > /dev/null 2>&1; then
+                    echo "Hydra is unreachable. Skipping OIDC check."
+                    exit 0
                   fi
-                  echo "  attempt $i/24: ready=$READY desired=$DESIRED, waiting 5s..."
-                  sleep 5
-                done
-                echo "MinIO restarted. Verifying OIDC..."
-                sleep 10
-                STRATEGY=$(curl -s "$MINIO_URL/api/v1/login" | grep -o '"loginStrategy":"[^"]*"' | cut -d'"' -f4)
-                echo "  MinIO loginStrategy after restart: $STRATEGY"
-              else
-                echo "OIDC is initialized correctly (strategy=redirect). No restart needed."
-              fi
+
+                  STRATEGY=$(curl -sf --connect-timeout 3 "$MINIO_URL/api/v1/login" \
+                    | grep -o '"loginStrategy":"[^"]*"' | cut -d'"' -f4)
+                  echo "MinIO loginStrategy: ${STRATEGY:-<empty>}"
+
+                  if [ "$STRATEGY" = "redirect" ]; then
+                    echo "OIDC initialized correctly. No action needed."
+                    exit 0
+                  fi
+
+                  echo "OIDC not initialized (strategy=${STRATEGY:-<empty>}). Restarting MinIO..."
+                  kubectl rollout restart deployment/streaming-minio -n streaming
+
+                  for i in $(seq 1 24); do
+                    READY=$(kubectl get deployment streaming-minio -n streaming \
+                      -o jsonpath='{.status.readyReplicas}' 2>/dev/null || echo "0")
+                    DESIRED=$(kubectl get deployment streaming-minio -n streaming \
+                      -o jsonpath='{.spec.replicas}' 2>/dev/null || echo "1")
+                    if [ "$READY" = "$DESIRED" ] && [ "$READY" != "0" ]; then
+                      echo "MinIO ready ($READY/$DESIRED). Verifying OIDC..."
+                      sleep 5
+                      STRATEGY=$(curl -sf --connect-timeout 3 "$MINIO_URL/api/v1/login" \
+                        | grep -o '"loginStrategy":"[^"]*"' | cut -d'"' -f4)
+                      echo "MinIO loginStrategy after restart: ${STRATEGY:-<empty>}"
+                      exit 0
+                    fi
+                    echo "  attempt $i/24: ready=$READY desired=$DESIRED, waiting 5s..."
+                    sleep 5
+                  done
+
+                  echo "MinIO did not become ready within 120s. Will retry next tick."
+                  exit 0

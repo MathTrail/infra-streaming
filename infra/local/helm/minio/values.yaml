@@ -32,6 +32,14 @@ minio:
     enabled: true
     size: 20Gi
 
+  # Standalone mode uses a single RWO PV. maxSurge: 0 is required — a new pod cannot
+  # mount the same RWO volume while the old pod still holds it. Accept ~10s downtime
+  # during rollout restart in exchange for correctness.
+  deploymentUpdate:
+    type: RollingUpdate
+    maxUnavailable: 1
+    maxSurge: 0
+
   buckets:
     - name: automq-data
       policy: none
