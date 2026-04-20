@@ -17,6 +17,12 @@ risingwave:
       path: /var/risingwave/meta/risingwave.db
 
   metaComponent:
+    # PV is provisioned on k3d-mathtrail-dev-server-0 (control-plane node). Tolerate the
+    # NoSchedule taint so the pod can always schedule where its volume lives after a reboot.
+    tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
     extraVolumes:
       - name: meta-sqlite
         persistentVolumeClaim:
