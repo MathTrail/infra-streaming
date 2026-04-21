@@ -1,6 +1,6 @@
-# MathTrail Infrastructure Local
+# MathTrail Streaming Infrastructure
 
-Local development infrastructure for the MathTrail platform.
+Streaming and event-driven infrastructure for the MathTrail platform. Provides the event bus, schema registry, stream processing, real-time messaging, and supporting observability tooling.
 
 ## Architecture
 
