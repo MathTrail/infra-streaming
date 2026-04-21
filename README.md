@@ -98,7 +98,7 @@ graph LR
 
 ## Prerequisites
 
-- A running K3d cluster (managed by [mathtrail-infra-local-k3s](../mathtrail-infra-local-k3s))
+- A running K3d cluster (managed by [infra-local-k3s](https://github.com/MathTrail/infra-local-k3s))
 
 ## Quick Start
 
