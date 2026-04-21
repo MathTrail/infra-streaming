@@ -2,6 +2,100 @@
 
 Local development infrastructure for the MathTrail platform.
 
+## Architecture
+
+```mermaid
+graph LR
+    PG[("PostgreSQL<br/>mathtrail ns")]
+    CanvasAPI(["Canvas API"])
+    MentorAPI(["Mentor API"])
+    Browser(["Browser"])
+
+    subgraph StreamingStack ["Streaming Platform (ns: streaming)"]
+        direction TB
+
+        subgraph EventBus ["Event Bus"]
+            direction LR
+            AMQ{AutoMQ<br/>:9092}
+            Apr["Apicurio Registry<br/>:8080"]
+        end
+
+        subgraph ObjectStorage ["Object Storage"]
+            Minio[("MinIO<br/>API :9000 · Console :9001")]
+        end
+
+        subgraph StreamProc ["Stream Processing"]
+            RW["RisingWave<br/>:4566"]
+        end
+
+        subgraph Realtime ["Real-time"]
+            Centrifugo["Centrifugo<br/>:8000"]
+        end
+
+        subgraph ObsDocs ["Observability & Docs"]
+            direction LR
+            KUI["Kafka UI"]
+            EC["EventCatalog"]
+        end
+    end
+
+    subgraph SecretsMgmt ["Secrets & Bootstrap"]
+        direction TB
+        LSec["local-secrets<br/>Vault seed"]
+        Vault["Vault"]
+        VSO["Vault Secrets<br/>Operator"]
+        LSec -- "seed" --> Vault
+        Vault --> VSO
+    end
+
+    subgraph IdentityLayer ["Identity (ns: identity)"]
+        direction LR
+        Traefik["Traefik"] --> OK["Oathkeeper"]
+        Hydra["Hydra<br/>:4444"]
+    end
+
+    Apr -- "KafkaSql storage" --> AMQ
+    AMQ -- "S3 tiered storage" --> Minio
+    RW -- "S3 state backend" --> Minio
+    Minio -. "OIDC SSO" .-> Hydra
+    VSO -- "credentials" --> Minio
+    VSO -- "credentials" --> AMQ
+    VSO -- "credentials" --> RW
+    VSO -- "credentials" --> Centrifugo
+    PG -- "CDC source" --> RW
+    RW -- "CDC events" --> AMQ
+    MentorAPI -- "produce / consume" --> AMQ
+    MentorAPI -. "schema" .-> Apr
+    CanvasAPI -- "publish hint" --> Centrifugo
+    Centrifugo -- "WebSocket" --> Browser
+    KUI -- "monitor" --> AMQ
+    KUI -. "schema" .-> Apr
+    Browser -- "observability UIs" --> Traefik
+    OK -- "authz (Keto)" --> KUI
+    OK -- "authz (Keto)" --> Apr
+    OK -- "authz (Keto)" --> EC
+
+    classDef svc fill:#5b21b6,stroke:#7c3aed,color:#fff
+    classDef storageCls fill:#1e3a5f,stroke:#3b82f6,color:#fff
+    classDef cdcCls fill:#166534,stroke:#22c55e,color:#fff
+    classDef eventCls fill:#1c1917,stroke:#78716c,color:#fff
+    classDef secretCls fill:#7f1d1d,stroke:#ef4444,color:#fff
+    classDef obsCls fill:#134e4a,stroke:#2dd4bf,color:#fff
+    classDef actorCls fill:#1e1b4b,stroke:#818cf8,color:#fff
+    classDef authCls fill:#b45309,stroke:#f59e0b,color:#fff
+    classDef bootstrapCls fill:#4a1d96,stroke:#8b5cf6,color:#fff
+
+    class AMQ,Apr eventCls
+    class Minio,PG storageCls
+    class RW cdcCls
+    class KUI,EC obsCls
+    class Centrifugo svc
+    class LSec bootstrapCls
+    class Vault,VSO secretCls
+    class Traefik,OK,Hydra authCls
+    class CanvasAPI,MentorAPI,Browser actorCls
+```
+
 ## Prerequisites
 
 - A running K3d cluster (managed by [mathtrail-infra-local-k3s](../mathtrail-infra-local-k3s))
