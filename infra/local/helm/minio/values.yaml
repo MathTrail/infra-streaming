@@ -47,9 +47,13 @@ minio:
       policy: none
 
   # PV is provisioned on k3d-mathtrail-dev-server-0 (control-plane node). Tolerate the
-  # NoSchedule taint so the pod can always schedule where its volume lives after a reboot.
+  # NoSchedule and Unschedulable taints so the pod can always schedule where its volume
+  # lives, even during the brief window when k3d marks the node unschedulable at startup.
   tolerations:
     - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+    - key: node.kubernetes.io/unschedulable
       operator: Exists
       effect: NoSchedule
 
